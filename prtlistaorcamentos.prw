@@ -40,7 +40,7 @@ Local cWhere2    := ''
 Local aBoxStat   := RetSx3Box( Posicione('SX3', 2, 'CJ_STATUS', 'X3CBox()' ),,, Len(SCJ->CJ_STATUS) )
 Local cStatus    := ''
 Local nPage      := Self:NPAGE
-Local nRegPag    := 10 // Registros por pagina
+Local nRegPag    := 500 // Registros por pagina
 Local cPagDe     := ''
 Local cPagAte    := ''
 
