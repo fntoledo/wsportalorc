@@ -13,7 +13,7 @@ Serviço REST de orcamento de venda para o portal de vendas
 //-------------------------------------------------------------------
 WSRESTFUL PRTORCAMENTO DESCRIPTION "Serviço REST de orcamento de venda para o portal de vendas"
 
-WSMETHOD GET DESCRIPTION "Retorna informações do orcamento de venda para o portal de vendas" WSSYNTAX "/PRTORCAMENTO "
+WSMETHOD GET DESCRIPTION "Retorna informações do orcamento de venda para o portal de vendas" WSSYNTAX "/PRTORCAMENTO/{codigo_orcamento} "
  
 END WSRESTFUL
 

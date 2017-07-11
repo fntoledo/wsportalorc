@@ -13,7 +13,7 @@ Serviço REST de produto para o portal de vendas
 //-------------------------------------------------------------------
 WSRESTFUL PRTPRODUTO DESCRIPTION "Serviço REST de produto para o portal de vendas"
 
-WSMETHOD GET DESCRIPTION "Retorna informações do produto para o portal de vendas" WSSYNTAX "/PRTPRODUTO "
+WSMETHOD GET DESCRIPTION "Retorna informações do produto para o portal de vendas" WSSYNTAX "/PRTPRODUTO/{codigo_produto} "
  
 END WSRESTFUL
 

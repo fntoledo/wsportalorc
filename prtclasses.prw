@@ -360,6 +360,9 @@ Class PrtItListaVendedores
 	Data cNome              As String
 	Data cCNPJ_CPF          As String
 	Data cTipo              As String
+	Data cTabela_CIF        As String
+	Data cTabela_FOB        As String
+	Data nPercComis         As Float
 	
 	Method New() Constructor 
 EndClass
@@ -367,11 +370,14 @@ EndClass
 //
 // Metodo Contrutor
 //
-Method New(cCodVend, cNomVend, cCGCVend, cTipVend) Class PrtItListaVendedores
+Method New(cCodVend, cNomVend, cCGCVend, cTipVend, cTabCIF, cTabFOB, nPercCom) Class PrtItListaVendedores
 	::cCodigo                := AllTrim(cCodVend)
 	::cNome                  := EncodeUtf8(AllTrim(cNomVend))
 	::cCNPJ_CPF              := AllTrim(cCGCVend)
 	::cTipo                  := AllTrim(cTipVend)
+	::cTabela_CIF            := AllTrim(cTabCIF)
+	::cTabela_FOB            := AllTrim(cTabFOB)
+	::nPercComis             := nPercCom
 Return(Self)
 
 //-------------------------------------------------------------------
@@ -570,4 +576,105 @@ Method New(cItem, cCodPro, cDesPro, cUM, cUM2, nQtdVen, nQtdVen2, nPrcVen, nVlrI
 	::nValor             := nVlrItem
 	::cEntregaProg       := AllTrim(cEntrPrg)
 	::dDtPrevEntrega     := DtoC(dDtPrev)
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtImpostos
+Classe dos impostos previstos no orçamento de venda para realizar 
+a serialização do objeto
+
+@author Felipe Toledo
+@since 10/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+
+Class PrtImpostos
+	
+	Data Cabecalho
+	Data Itens
+	
+	Method New() Constructor
+	Method AddCab()
+	Method AddItem()
+	
+EndClass
+
+//
+// Metodo Contrutor
+//
+Method New() Class PrtImpostos
+	::Cabecalho   := Nil
+	::Itens       := {}
+Return(Self)
+
+//
+// Adiciona Cabecalho
+//
+Method AddCab(oCabOrc) Class PrtImpostos
+	::Cabecalho := oCabOrc
+Return(Self)
+
+//
+// Adiciona Itens
+//
+Method AddItem(oItensOrc) Class PrtImpostos
+	Aadd(::Itens,oItensOrc)
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtCabImpostos
+Classe do cabecalho dos impostos para realizar a serialização do 
+objeto
+
+@author Felipe Toledo
+@since 10/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+Class PrtCabImpostos
+	
+	Data nValorTotal        As Float
+	
+	Method New() Constructor 
+EndClass
+
+//
+// Metodo Contrutor
+//
+Method New(nValTot) Class PrtCabImpostos
+	::nValorTotal            := nValTot
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtItensImpostos
+Classe dos impostos do orcamento para realizar a serialização do 
+objeto
+
+@author Felipe Toledo
+@since 10/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+Class PrtItensImpostos
+	
+	Data cImposto           As String
+	Data nBase              As Float
+	Data nAliquota          As Float
+	Data nValor             As Float
+	
+	Method New() Constructor 
+EndClass
+
+//
+// Metodo Contrutor
+//
+Method New(cDescImp, nBase, nAliq, nValImp) Class PrtItensImpostos
+	::cImposto           := EncodeUtf8(AllTrim(cDescImp))
+	::nBase              := nBase
+	::nAliquota          := nAliq
+	::nValor             := nValImp
 Return(Self)

@@ -60,7 +60,7 @@ cWhere +="%"
 
 // Query para listar os dados
 BeginSql Alias cAliasQry
-	SELECT A3_COD, A3_NOME, A3_CGC, A3_TIPO
+	SELECT A3_COD, A3_NOME, A3_CGC, A3_TIPO, A3_TABELA, A3_TABELAF, A3_COMIS
 	  FROM %Table:SA3% SA3
 	 WHERE SA3.A3_FILIAL = %xFilial:SA3%
 	   %Exp:cWhere%
@@ -73,7 +73,7 @@ If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
 	cTipo := A3_TIPO+"-"+AllTrim( aBoxTipo[ Ascan( aBoxTipo, { |x| x[ 2 ] == A3_TIPO} ), 3 ]),;
-	oObjResp:Add( PrtItListaVendedores():New( A3_COD, A3_NOME, A3_CGC, cTipo ) );
+	oObjResp:Add( PrtItListaVendedores():New( A3_COD, A3_NOME, A3_CGC, cTipo, A3_TABELA, A3_TABELAF, A3_COMIS ) );
 	}))
 Else
 	SetRestFault(400, "Lista de vendedores vazia")
