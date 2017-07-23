@@ -1,7 +1,7 @@
 #include 'totvs.ch'
 //-------------------------------------------------------------------
 /*/{Protheus.doc} PrtClasses
-Classes para o portal de venda da ConduCopper
+Classes para o serialização de ojetos portal de venda
 
 @author Felipe Toledo
 @since 07/07/17
@@ -158,6 +158,7 @@ Class PrtItListaClientes
 	Data cLoja              As String
 	Data cNome              As String
 	Data cCNPJ_CPF          As String
+	Data cVendedor          As String
 
 	Method New() Constructor 
 EndClass
@@ -165,11 +166,12 @@ EndClass
 //
 // Metodo Contrutor
 //
-Method New(cCodCli, cLojCli, cNomCli, cCGCCli) Class PrtItListaClientes
+Method New(cCodCli, cLojCli, cNomCli, cCGCCli, cCodVend) Class PrtItListaClientes
 	::cCodigo                := AllTrim(cCodCli)
 	::cLoja                  := AllTrim(cLojCli)
 	::cNome                  := EncodeUtf8(AllTrim(cNomCli))
 	::cCNPJ_CPF              := AllTrim(cCGCCli)
+	::cVendedor              := AllTrim(cCodVend)
 Return(Self)
 
 //-------------------------------------------------------------------
@@ -512,6 +514,7 @@ Class PrtCabOrcamento
 	Data cTabelaPreco       As String
 	Data cVendedor          As String
 	Data cTipoFrete         As String
+	Data cTransportadora    As String
 	
 	Method New() Constructor 
 EndClass
@@ -519,7 +522,7 @@ EndClass
 //
 // Metodo Contrutor
 //
-Method New(cCodOrc, dEmissao, cCodCli, cLojCli, cNomCli, cCPFCli, cStatus, cCondPag, cTabPrc, cCodVend, cTpFrete) Class PrtCabOrcamento
+Method New(cCodOrc, dEmissao, cCodCli, cLojCli, cNomCli, cCPFCli, cStatus, cCondPag, cTabPrc, cCodVend, cTpFrete, cTransp) Class PrtCabOrcamento
 	::cCodigo                := AllTrim(cCodOrc)
 	::dEmissao               := DtoC(dEmissao)
 	::cCodigoCliente         := AllTrim(cCodCli)
@@ -531,6 +534,7 @@ Method New(cCodOrc, dEmissao, cCodCli, cLojCli, cNomCli, cCPFCli, cStatus, cCond
 	::cTabelaPreco           := AllTrim(cTabPrc)
 	::cVendedor              := AllTrim(cCodVend)
 	::cTipoFrete             := AllTrim(cTpFrete)
+	::cTransportadora        := AllTrim(cTransp)
 Return(Self)
 
 //-------------------------------------------------------------------
@@ -557,6 +561,7 @@ Class PrtItensOrcamento
 	Data nValor             As Float
 	Data cEntregaProg       As String
 	Data dDtPrevEntrega     As Date
+	Data cObservacao        As String
 	
 	Method New() Constructor 
 EndClass
@@ -564,7 +569,7 @@ EndClass
 //
 // Metodo Contrutor
 //
-Method New(cItem, cCodPro, cDesPro, cUM, cUM2, nQtdVen, nQtdVen2, nPrcVen, nVlrItem, cEntrPrg, dDtPrev) Class PrtItensOrcamento
+Method New(cItem, cCodPro, cDesPro, cUM, cUM2, nQtdVen, nQtdVen2, nPrcVen, nVlrItem, cEntrPrg, dDtPrev, cObs) Class PrtItensOrcamento
 	::cItem              := AllTrim(cItem)
 	::cProduto           := AllTrim(cCodPro)
 	::cDescriProd        := EncodeUtf8(AllTrim(cDesPro))
@@ -576,6 +581,7 @@ Method New(cItem, cCodPro, cDesPro, cUM, cUM2, nQtdVen, nQtdVen2, nPrcVen, nVlrI
 	::nValor             := nVlrItem
 	::cEntregaProg       := AllTrim(cEntrPrg)
 	::dDtPrevEntrega     := DtoC(dDtPrev)
+	::cObservacao        := AllTrim(cObs)
 Return(Self)
 
 //-------------------------------------------------------------------
@@ -677,4 +683,240 @@ Method New(cDescImp, nBase, nAliq, nValImp) Class PrtItensImpostos
 	::nBase              := nBase
 	::nAliquota          := nAliq
 	::nValor             := nValImp
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtListaTransportadoras
+Classe de Lista das transportadoras disponíveis para realizar a 
+serialização do objeto
+
+@author Felipe Toledo
+@since 11/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+
+Class PrtListaTransportadoras
+	
+	Data Transportadoras
+	
+	Method New() Constructor
+	Method Add() 
+	
+EndClass
+
+//
+// Metodo Contrutor
+//
+Method New() Class PrtListaTransportadoras
+	::Transportadoras := {}
+Return(Self)
+
+//
+// Adiciona um novo item
+//
+Method Add(oTransportadora) Class PrtListaTransportadoras
+	Aadd(::Transportadoras, oTransportadora)
+Return
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtItListaTransportadoras
+Classe de Transportadoras para realizar a serialização do objeto 
+
+@author Felipe Toledo
+@since 11/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+Class PrtItListaTransportadoras
+	
+	Data cCodigo            As String
+	Data cNome              As String
+	Data cCNPJ_CPF          As String
+
+	Method New() Constructor 
+EndClass
+
+//
+// Metodo Contrutor
+//
+Method New(cCodTra, cNomTra, cCGC) Class PrtItListaTransportadoras
+	::cCodigo                := AllTrim(cCodTra)
+	::cNome                  := EncodeUtf8(AllTrim(cNomTra))
+	::cCNPJ_CPF              := AllTrim(cCGC)
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtValidaQuant
+Classe de retorno da validação da quantidade do orçamento de venda 
+para realizar a serialização do objeto
+
+@author Felipe Toledo
+@since 11/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+
+Class PrtValidaQuant
+	
+	Data nQuant_2UM         As Float
+	Data cSegUM             As String
+	
+	Method New() Constructor 
+EndClass
+
+//
+// Metodo Contrutor
+//
+
+Method New(nQtde2UM, cSegUM) Class PrtValidaQuant
+	::nQuant_2UM            := nQtde2UM
+	::cSegUM                := cSegUM
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtValidaPreco
+Classe de retorno da validação do preço unitário do orçamento de venda 
+para realizar a serialização do objeto
+
+@author Felipe Toledo
+@since 11/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+
+Class PrtValidaPreco
+	
+	Data nValorTot          As Float
+	
+	Method New() Constructor 
+EndClass
+
+//
+// Metodo Contrutor
+//
+
+Method New(nValorTot) Class PrtValidaPreco
+	::nValorTot            := nValorTot
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtTabelaPreco
+Classe de retorno da da tabela de preço para realizar a serialização 
+do objeto
+
+@author Felipe Toledo
+@since 11/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+
+Class PrtTabelaPreco
+	
+	Data cTabelaPrc     As String
+	
+	Method New() Constructor 
+EndClass
+
+//
+// Metodo Contrutor
+//
+
+Method New(cCodTab) Class PrtTabelaPreco
+	::cTabelaPrc          := cCodTab
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtAprovaOrcamento
+Classe de aprovação do orcamento para realizar a serialização do 
+objeto
+
+@author Felipe Toledo
+@since 18/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+Class PrtAprovaOrcamento
+	
+	Data cOrcamento         As String
+	Data cStatus            As String
+	Data cPedido            As String
+
+	Method New() Constructor 
+EndClass
+
+//
+// Metodo Contrutor
+//
+Method New(cNumOrc, cStatus, cPedido) Class PrtAprovaOrcamento
+	::cOrcamento             := AllTrim(cNumOrc)
+	::cStatus                := AllTrim(cStatus)
+	::cPedido                := AllTrim(cPedido)
+Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtCliente
+Classe de cliente para realizar a serialização do objeto
+@author Felipe Toledo
+@since 07/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+
+Class PrtCliente
+	
+	Data cCodigo            As String
+	Data cLoja              As String
+	Data cCNPJ              As String
+	Data cEndereco          As String
+	Data cBairro            As String
+	Data cMunicipio         As String
+	Data cUF                As String
+	Data cCEP               As String
+	Data nLimiteCredito     As Float
+	Data dPrimeiraCompra    As Date
+	Data nSaldoHistorico    As Float
+	Data dUltimaCompra      As Date
+	Data nLimiteCredSec     As Float
+	Data nMaiorAtraso       As Integer
+	Data nSaldoLimiteSec    As Float
+	Data nMediaAtraso       As Float
+	Data nMaiorCompra       As Float
+	Data cGrauRisco         As String
+	Data nMaiorSaldo        As Float
+	
+	Method New() Constructor 
+EndClass
+
+//
+// Metodo Contrutor
+//
+
+Method New(cCodCli, cLojCli, cCGC, cEnd, cBairro, cMun, cUF, cCEP, nLimCred, dDtPriCom, nSldHist, dDtUltCom, nLimSec, nMaiorAtr, nSldSec, nMediaAtr, nMaiorCom, cRisco, nMaiorSld ) Class PrtCliente
+	::cCodigo               := AllTrim(cCodCli)
+	::cLoja                 := AllTrim(cLojCli)
+	::cCNPJ                 := AllTrim(cCGC)
+	::cEndereco             := EncodeUtf8(AllTrim(cEnd))
+	::cBairro               := EncodeUtf8(AllTrim(cBairro))
+	::cMunicipio            := EncodeUtf8(AllTrim(cMun))
+	::cUF                   := AllTrim(cUF)
+	::cCEP                  := AllTrim(cCEP)
+	::nLimiteCredito        := nLimCred
+	::dPrimeiraCompra       := DtoC(dDtPriCom)
+	::nSaldoHistorico       := nSldHist
+	::dUltimaCompra         := DtoC(dDtUltCom)
+	::nLimiteCredSec        := nLimSec
+	::nMaiorAtraso          := nMaiorAtr
+	::nSaldoLimiteSec       := nSldSec
+	::nMediaAtraso          := nMediaAtr
+	::nMaiorCompra          := nMaiorCom
+	::cGrauRisco            := AllTrim(cRisco)
+	::nMaiorSaldo           := nMaiorSld
 Return(Self)

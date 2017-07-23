@@ -3,22 +3,22 @@
 #Include "RestFul.CH"
 
 //-------------------------------------------------------------------
-/*/{Protheus.doc} PRTIMPOSTOS
-Serviço REST de impostos previstos para o orçamento de venda 
-para o portal de vendas
+/*/{Protheus.doc} PRTVALIDACONDPAG
+Serviço REST de validação da condição de pagamento informada no 
+no portal de vendas
 
 @author Felipe Toledo
-@since 10/07/17
+@since 11/07/17
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSRESTFUL PRTIMPOSTOS DESCRIPTION "Serviço REST de impostos para o portal de vendas"
+WSRESTFUL PRTVALIDACONDPAG DESCRIPTION "Serviço REST de validação da condição de pagamento para o portal de vendas"
 
 WSDATA CCODCLI  As String // Codigo do cliente 
 WSDATA CLOJCLI  As String // Loja do cliente
 WSDATA CCONDPAG As String // Condição de Pagamento
 
-WSMETHOD POST DESCRIPTION "Calcula os impostos previstos no orçamento de venda para o portal de vendas" WSSYNTAX "/PRTIMPOSTOS "
+WSMETHOD POST DESCRIPTION "Valida a condição de pagamento informando no orçamento" WSSYNTAX "/PRTVALIDACONDPAG "
  
 END WSRESTFUL
 
@@ -30,9 +30,7 @@ Processa as informações e retorna o json
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD POST WSSERVICE PRTIMPOSTOS
-Local oObjResp   := PrtImpostos():New() // --> Objeto que será serializado
-Local cJson      := ''
+WSMETHOD POST WSSERVICE PRTVALIDACONDPAG
 Local cJSonReq 	 := Self:GetContent() // Pega a string do JSON de requisicao
 Local oParseJSON := Nil 
 Local cCodCli    := PadR(AllTrim(Self:CCODCLI),TamSX3('A1_COD')[1])
@@ -60,7 +58,7 @@ If lRet
 	EndIf
 EndIf
 
-If lRet
+If lRet .And. !Empty(cJSonReq)
 	// --> Deserializa a string JSON
 	FWJsonDeserialize(cJSonReq, @oParseJSON)
 	
@@ -85,43 +83,23 @@ If lRet
 	// Calcula os impostos
 	If lRet
 		aRetImp := U_PrtImpos(cCodCli,cLojCli,cCondPag, aVetImp)
-	EndIf
-
-	If Len(aRetImp) > 0
-	
-			// Cabecalho
-			oObjResp:AddCab( PrtCabImpostos():New(aRetImp[1]) )
-	
-			// Itens
-			//----------------------------
-			// aRetImp[2]
-			//
-			// 1-Imposto
-			// 2-Descricao
-			// 3-Base
-			// 4-Aliquota
-			// 5-Valor
-			// 6-Tipo imposto
-			//----------------------------
-			For nCntFor := 1 To Len(aRetImp[2])
-				oObjResp:AddItem( PrtItensImpostos():New( aRetImp[2][nCntFor][2],;
-				                                           aRetImp[2][nCntFor][3],;
-				                                           aRetImp[2][nCntFor][4],;
-				                                           aRetImp[2][nCntFor][5]) )
-			Next nCntFor
-	Else
-		SetRestFault(400, "Erro na apuracao dos impostos")
-		lRet := .F.
+		
+		If Len(aRetImp) > 0
+		
+			nPosVet := AsCan(aRetImp[2], {|x| Upper(AllTrim(x[6])) == 'SOL'})
+				
+			If nPosVet > 0 .And. aRetImp[2][nPosVet][5] > 0 .And. AllTrim(SE4->E4_SOLID) <> 'S'
+				SetRestFault(400, "orcamento possui ST. Utilize uma condicao que gere ST")
+				lRet := .F.
+			EndIf
+		EndIf
 	EndIf
 EndIf
-
-// --> Transforma o objeto de produtos em uma string json
-cJson := FWJsonSerialize(oObjResp,.F.)
 
 // define o tipo de retorno do método
 ::SetContentType("application/json")
 
 // --> Envia o JSON Gerado para a aplicação Client
-::SetResponse(cJson)
+::SetResponse("{CCONDICAO: 'OK'}")
 
 Return(lRet)

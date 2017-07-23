@@ -2,20 +2,20 @@
 #Include 'parmtype.ch'
 #Include "RestFul.CH"
 //-------------------------------------------------------------------
-/*/{Protheus.doc} PRTLISTACLIENTES
-Serviço REST de lista de clientes portal de vendas
+/*/{Protheus.doc} PRTLISTATRANSPORTADORAS
+Serviço REST de lista de transportadoras disponível para o portal de vendas
 
 @author Felipe Toledo
-@since 07/07/17
+@since 11/07/17
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSRESTFUL PRTLISTACLIENTES DESCRIPTION "Serviço REST de clientes portal de vendas"
+WSRESTFUL PRTLISTATRANSPORTADORAS DESCRIPTION "Serviço REST de listas de transportadoras disponíveis portal de vendas"
 
 WSDATA CFILTROSQL As String OPTIONAL // String com filtro SQL
 WSDATA NPAGE      As Integer OPTIONAL // Numero da pagina
 
-WSMETHOD GET DESCRIPTION "Retorna todos os clientes disponiveis para o portal de vendas" WSSYNTAX "/PRTLISTACLIENTES "
+WSMETHOD GET DESCRIPTION "Retorna todos os transportadoras disponiveis para o portal de vendas" WSSYNTAX "/PRTLISTATRANSPORTADORAS/{CODIGO_TRANSPORTADORA} "
  
 END WSRESTFUL
 
@@ -23,16 +23,16 @@ END WSRESTFUL
 /*/{Protheus.doc} GET
 Processa as informações e retorna o json
 @author Felipe Toledo
-@since 07/07/17
+@since 11/07/17
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD GET WSRECEIVE CFILTROSQL, NPAGE WSSERVICE PRTLISTACLIENTES
+WSMETHOD GET WSRECEIVE CFILTROSQL, NPAGE WSSERVICE PRTLISTATRANSPORTADORAS
 Local oObjResp   := Nil
 Local cJson      := ''
 Local cAliasQry  := GetNextAlias()
-Local oObjResp   := PrtListaClientes():New() // --> Objeto que será serializado
-Local cCodVen    := U_PrtCodVen() // Codigo do Vendedor
+Local oObjResp   := PrtListaTransportadoras():New() // --> Objeto que será serializado
+Local cCodTransp := '' // Codigo da transportadora
 Local cWhere     := ''
 Local cWhere2    := ''
 Local cFiltroSql := Self:CFILTROSQL
@@ -45,14 +45,14 @@ Local lRet      := .T.
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
 //-------------------------------------------------------------
-If Empty(cCodVen) .And. Len(::aUrlParms) > 0
-	cCodVen := ::aUrlParms[1] // Recebe o codigo do representante por parametro
+If Len(::aUrlParms) > 0
+	cCodTransp := ::aUrlParms[1] // Recebe o codigo da transportadora
 EndIf
 
 cWhere :="%"
-If ! Empty(cCodVen)
-	// Filtra vendedor
-	cWhere += " AND SA1.A1_VEND   = '" + cCodVen + "' "
+If ! Empty(cCodTransp)
+	// Filtra transportadora
+	cWhere += " AND SA4.A4_COD   = '" + cCodTransp + "' "
 EndIf
 
 If ! Empty(cFiltroSql)
@@ -74,25 +74,25 @@ cWhere2 += "%"
 
 // Query para listar os dados
 BeginSql Alias cAliasQry
-    SELECT A1_COD, A1_LOJA, A1_NOME, A1_CGC, A1_VEND
+    SELECT A4_COD, A4_NOME, A4_CGC
       FROM (
-	SELECT ROW_NUMBER() OVER (ORDER BY A1_COD, A1_LOJA) AS LINHA, A1_COD, A1_LOJA, A1_NOME, A1_CGC, A1_VEND
-	  FROM %Table:SA1% SA1
-	 WHERE SA1.A1_FILIAL = %xFilial:SA1%
+	SELECT ROW_NUMBER() OVER (ORDER BY A4_COD, A4_COD) AS LINHA, A4_COD, A4_NOME, A4_CGC
+	  FROM %Table:SA4% SA4
+	 WHERE SA4.A4_FILIAL = %xFilial:SA4%
 	   %Exp:cWhere%
-	   AND SA1.%notDel%) TRB
+	   AND SA4.%notDel%) TRB
 	   %Exp:cWhere2%
 	 ORDER
-	    BY A1_COD, A1_LOJA
+	    BY A4_COD
 EndSql
 
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
-	oObjResp:Add( PrtItListaClientes():New( A1_COD, A1_LOJA, A1_NOME, A1_CGC, A1_VEND ) );
+	oObjResp:Add( PrtItListaTransportadoras():New( A4_COD, A4_NOME, A4_CGC ) );
 	}))
 Else
-	SetRestFault(400, "Lista de clientes vazia")
+	SetRestFault(400, "Lista de transportadoras vazia")
 	lRet := .F.
 EndIf
 

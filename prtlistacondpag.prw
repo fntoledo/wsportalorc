@@ -41,7 +41,7 @@ Local lRet      := .T.
 // Filtro na seleção dos registros
 //-------------------------------------------------------------
 If Empty(cCodCond) .And. Len(::aUrlParms) > 0
-	cCodCond := ::aUrlParms[1] // Recebe o codigo do representante por parametro
+	cCodCond := ::aUrlParms[1] // Recebe a condição de pagamento
 EndIf
 
 cWhere :="%"

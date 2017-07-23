@@ -157,15 +157,15 @@ For nCntFor := 1 To Len(aItensOrc)
 	SB1->(DbSetOrder(1)) // B1_FILIAL+B1_COD
 	SB1->(MsSeek(xFilial("SB1")+aItensOrc[nCntFor][1]))
 
-    // Verifica TES Inteligente, caso a TES não for informada
-    If !Empty(aItensOrc[nCntFor][5])
+	// Verifica TES Inteligente, caso a TES não for informada
+	If !Empty(aItensOrc[nCntFor][5])
 		cTes := aItensOrc[nCntFor][5]
 	Else
-    	cTes := MaTesInt(2,'01', cCodCli, cLojCli,"C", aItensOrc[nCntFor][1], NIL)
-    EndIf
-    
-    SF4->(dbSetOrder(1))
-    SF4->(MsSeek(xFilial("SF4")+cTes))
+		cTes := MaTesInt(2,'01', cCodCli, cLojCli,"C", aItensOrc[nCntFor][1], NIL)
+	EndIf
+	
+	SF4->(dbSetOrder(1))
+	SF4->(MsSeek(xFilial("SF4")+cTes))
 
 	//-----------------------------------------------
 	// Calcula o preco de lista
@@ -260,3 +260,62 @@ U_PrtImpos("021", "01", "021", aItensOrc)
 */
 
 Return(aRet)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtEnvOrc
+Envia Orçamento de Venda por E-mail
+
+@author Felipe Toledo
+@since 23/07/17
+@type Function
+/*/
+//-------------------------------------------------------------------
+User Function PrtEnvOrc(cEmp, cFil, cNumOrc, cEmail)
+Local cDirPDF       := ''
+Local cFilePrint    := ''
+Local cFileAttac    := ''
+Local oProcWF       := Nil
+Local cUrlLogo      := ''
+Local lRet          := .F.
+
+// Setar ambiente para não consumir licença.
+RpcSetType(3)
+RpcSetEnv(cEmp,cFil,,,'FAT')
+
+cDirPDF   := SuperGetMV('ES_DIRBPDF',.F.,'\PDF\')
+cUrlLogo  := SuperGetMV('ES_URLLOGO',.F.,'http://www.condutti.com.br/img/logo_condutti.png')
+
+// Gera PDF do Orçamento de venda
+cFilePrint := U_CDT020JOB(cNumOrc)
+
+cFileAttac := cDirPDF+cFilePrint+'.pdf'
+
+If File(cFileAttac)
+	oProcWF := TWFProcess():New("ORCVENDA","ENVIO DE ORCAMENTO DE VENDA")
+	oProcWF:NewTask("ORCVENDA","\workflow\orcvenda.html")
+	oProcWF:cSubject := '[ONLINE] - Orçamento de venda: ' + cNumOrc
+	oProcWF:cTo      := cEmail // 'felipenunestoledo@gmail.com'
+	
+	oProcWF:oHTML:ValByName("cUrlLogo",AllTrim(cUrlLogo))
+	oProcWF:oHTML:ValByName("cNumOrc",cNumOrc)
+	oProcWF:oHTML:ValByName("cEmpresa",AllTrim(FWFilRazSocial()))
+	
+	// Envia Orçamento por e-mail
+	oProcWF:AttachFile(cFileAttac)
+	
+	oProcWF:Start()
+	WFSendMail()
+	oProcWF:Finish()
+	oProcWF := FreeObj(oProcWF)
+	
+	lRet := .T.
+EndIf
+
+Return(lRet)
+
+/*
+User Function PrtTstEnv()
+//U_PrtEnvOrc('99','01','000496', 'felipenunestoledo@gmail.com')
+StartJob('U_PrtEnvOrc','VBIEED',.F.,'02','0201','000496', 'felipenunestoledo@gmail.com')
+Return
+*/

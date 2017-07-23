@@ -70,7 +70,7 @@ If !Empty(nPage) .And. nPage > 0
 EndIf
 cWhere2 += "%"
 
-// Query para listar os produtos disponiveis para orçamento
+// Query para listar dados
 BeginSql Alias cAliasQry
 	COLUMN CJ_EMISSAO AS DATE
 	SELECT CJ_NUM, CJ_EMISSAO, CJ_CLIENTE, CJ_LOJA, A1_NOME, A1_CGC, CJ_STATUS
@@ -92,7 +92,7 @@ BeginSql Alias cAliasQry
 EndSql
 
 If (cAliasQry)->( ! Eof() )
-	//Cria um objeto da classe produtos para fazer a serialização na função FWJSONSerialize
+	//Cria um objeto para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
 	cStatus := CJ_STATUS+"-"+AllTrim( aBoxStat[ Ascan( aBoxStat, { |x| x[ 2 ] == CJ_STATUS} ), 3 ]),;
 	oObjResp:Add( PrtItListaOrcamentos():New( CJ_NUM, CJ_EMISSAO, CJ_CLIENTE, CJ_LOJA, A1_NOME, A1_CGC, cStatus ) );
@@ -102,7 +102,7 @@ Else
 	lRet := .F.
 EndIf
 
-// --> Transforma o objeto de produtos em uma string json
+// --> Transforma o objeto em uma string json
 cJson := FWJsonSerialize(oObjResp,.F.)
 
 // define o tipo de retorno do método
