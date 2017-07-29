@@ -15,6 +15,7 @@ WSRESTFUL PRTLISTAPRODUTOS DESCRIPTION "Serviço REST de lista de produtos portal
 
 WSDATA CFILTROSQL As String OPTIONAL // String com filtro SQL
 WSDATA NPAGE      As Integer OPTIONAL // Numero da pagina
+WSDATA NLIMPAG    As Integer OPTIONAL // Numero Maximo de registros por pagina
 
 WSMETHOD GET DESCRIPTION "Retorna todos os produtos disponiveis para o portal de vendas" WSSYNTAX "/PRTLISTAPRODUTOS "
  
@@ -28,19 +29,26 @@ Processa as informações e retorna o json
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD GET WSRECEIVE CFILTROSQL, NPAGE WSSERVICE PRTLISTAPRODUTOS
+WSMETHOD GET WSRECEIVE CFILTROSQL, NPAGE, NLIMPAG WSSERVICE PRTLISTAPRODUTOS
 Local oObjResp   := Nil
 Local cJson      := ''
 Local cAliasQry  := GetNextAlias()
+Local cAliasTot  := ''
 Local oObjResp   := PrtListaProdutos():New() // --> Objeto que será serializado
 Local cFiltroSql := Self:CFILTROSQL
 Local nPage      := Self:NPAGE
-Local nRegPag    := 500 // Registros por pagina
+Local nRegPag    := Self:NLIMPAG // Registros por pagina
 Local cPagDe     := ''
 Local cPagAte    := ''
 Local cWhere     := ''
 Local cWhere2    := ''
+Local nTotReg    := 0
 Local lRet       := .T.
+
+// Converte string base64 para formato original
+If !Empty(cFiltroSql)
+	cFiltroSql := Decode64(cFiltroSql)
+EndIf
 
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
@@ -54,7 +62,7 @@ cWhere +="%"
 
 // Controle de paginação
 cWhere2 := "%"
-If !Empty(nPage) .And. nPage > 0
+If !Empty(nPage) .And. nPage > 0 .And. !Empty(nRegPag) .And. nRegPag > 0
 	cPagDe  := AllTrim(Str((nPage * nRegPag) - (nRegPag-1)))
 	cPagAte := Alltrim(Str(nPage * nRegPag))
 	
@@ -83,9 +91,29 @@ If (cAliasQry)->( ! Eof() )
 	(cAliasQry)->(DbEval({||;
 	oObjResp:Add( PrtItListaProdutos():New( B1_COD, B1_DESC ) );
 	}))
-Else
-	SetRestFault(400, "Lista de produtos vazio")
-	lRet := .F.
+EndIf
+
+(cAliasQry)->(DbCloseArea())
+
+If lRet .And. (Empty(nPage) .Or. nPage <= 1)
+	cAliasTot := GetNextAlias()
+	// Query para listar os dados
+	BeginSql Alias cAliasTot
+		SELECT COUNT(*) TOTALREG
+		  FROM %Table:SB1% SB1
+		 WHERE SB1.B1_FILIAL = %xFilial:SB1%
+		   %Exp:cWhere%
+		   AND SB1.B1_TIPO   = 'PA'
+		   AND SB1.B1_MSBLQL <> '1'
+		   AND SB1.%notDel% 
+	EndSql
+	If (cAliasTot)->( ! Eof() )
+		nTotReg := (cAliasTot)->TOTALREG
+	EndIf
+	
+	(cAliasTot)->(DbCloseArea())
+	
+	oObjResp:SetTotReg(nTotReg)
 EndIf
 
 // --> Transforma o objeto de produtos em uma string json
@@ -96,7 +124,5 @@ cJson := FWJsonSerialize(oObjResp,.F.)
 
 // --> Envia o JSON Gerado para a aplicação Client
 ::SetResponse(cJson)
-
-(cAliasQry)->(DbCloseArea())
 
 Return(lRet)

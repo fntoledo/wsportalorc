@@ -74,6 +74,8 @@ If lRet
 				For nX := 1 To Len(aErro)
 					cErro += aErro[nX] + Chr(13)+Chr(10)
 				Next nX
+				
+				cErro := EncodeUtf8(cErro)
 			
 				SetRestFault(400, cErro)
 				lRet := .F.

@@ -189,6 +189,8 @@ For nCntFor := 1 To Len(oParseJSON:ITENS)
 	Aadd(aItens, aLinha)
 Next nCntFor
 
+SA3->(DbSetOrder(1)) // Set ordem para evitar erro na validação do campo CJ_VEND1
+
 MSExecAuto({ |X, Y, Z| MATA415(X, Y, Z) }, aCabec, aItens, 3)
 
 If lMsErroAuto
@@ -200,10 +202,12 @@ If lMsErroAuto
 		cErro += aErro[nX] + Chr(13)+Chr(10)
 	Next nX
 
+	cErro := EncodeUtf8(cErro)
+
 	SetRestFault(400, cErro)
 	lRet := .F.
 Else
-	ConfirmSX8()
+	//ConfirmSX8()
 	// Retorno
 	cJson := "{ORCAMENTO: '"+cNumOrc+"'}"
 EndIf
@@ -326,6 +330,8 @@ If lRet
 	
 	(cAliasQry)->(DbCloseArea())
 	
+	SA3->(DbSetOrder(1)) // Set ordem para evitar erro na validação do campo CJ_VEND1
+	
 	MSExecAuto({ |X, Y, Z| MATA415(X, Y, Z) }, aCabec, aItens, 4)
 	
 	If lMsErroAuto
@@ -336,6 +342,8 @@ If lRet
 			cErro += aErro[nX] + Chr(13)+Chr(10)
 		Next nX
 	
+		cErro := EncodeUtf8(cErro)
+		
 		SetRestFault(400, cErro)
 		lRet := .F.
 	Else
@@ -408,6 +416,8 @@ If lRet
 				For nX := 1 To Len(aErro)
 					cErro += aErro[nX] + Chr(13)+Chr(10)
 				Next nX
+				
+				cErro := EncodeUtf8(cErro)
 			
 				SetRestFault(400, cErro)
 				lRet := .F.

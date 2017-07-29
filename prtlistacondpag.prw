@@ -37,6 +37,11 @@ Local cCodCond  := ''
 Local cWhere    := ''
 Local lRet      := .T.
 
+// Converte string base64 para formato original
+If !Empty(cFiltroSql)
+	cFiltroSql := Decode64(cFiltroSql)
+EndIf
+
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
 //-------------------------------------------------------------
@@ -78,9 +83,6 @@ If (cAliasQry)->( ! Eof() )
 	(cAliasQry)->(DbEval({||;
 	oObjResp:Add( PrtItListaCondPag():New( E4_CODIGO, E4_DESCRI, E4_SOLID ) );
 	}))
-Else
-	SetRestFault(400, "Lista de condicao de pagamento vazia")
-	lRet := .F.
 EndIf
 
 // --> Transforma o objeto de produtos em uma string json

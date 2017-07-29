@@ -16,7 +16,7 @@ WSRESTFUL PRTVALIDAQUANT DESCRIPTION "Serviço REST de validação da quantidade di
 WSDATA CCODPRO      As String // Codigo do produto
 WSDATA NQUANT1UM    As Float  // Quantidade vendida na primeira unidade de medida
 
-WSMETHOD POST DESCRIPTION "Valida a quantidade digitada do preço de venda e retorna a quantidade convertida na segunda unidade de medida" WSSYNTAX "/PRTVALIDAQUANT "
+WSMETHOD POST DESCRIPTION "Valida a quantidade digitada do orçamento de venda e retorna a quantidade convertida na segunda unidade de medida" WSSYNTAX "/PRTVALIDAQUANT "
  
 END WSRESTFUL
 

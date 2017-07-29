@@ -117,10 +117,12 @@ Do While SCJ->(! Eof()) .And. (SCJ->CJ_FILIAL+SCJ->CJ_NUM >= xFilial('SCJ')+MV_P
 	
 	oPrinter:Say( 140, 005, 'CEP: ' , oFont12N)
 	oPrinter:Say( 140, 050, Transform(AllTrim(IF( !Empty(SA1->A1_CEPE), SA1->A1_CEPE, SA1->A1_CEP )),PesqPict("SA1","A1_CEP")), oFont12)
-	oPrinter:Say( 140, 200, 'CNPJ/CPF: ', oFont12N)
-	oPrinter:Say( 140, 250, Subs(transform(SA1->A1_CGC,PicPes(RetPessoa(SA1->A1_CGC))),1,at("%",transform(SA1->A1_CGC,PicPes(RetPessoa(SA1->A1_CGC))))-1), oFont12)
-	oPrinter:Say( 140, 380, "IE: ", oFont12N)
-	oPrinter:Say( 140, 400, SA1->A1_INSCR, oFont12)
+	oPrinter:Say( 140, 150, 'Fone: ' , oFont12N)
+	oPrinter:Say( 140, 180, '('+SA1->A1_DDD+') '+AllTrim(SA1->A1_TEL), oFont12)
+	oPrinter:Say( 140, 300, 'CNPJ/CPF: ', oFont12N)
+	oPrinter:Say( 140, 350, Subs(transform(SA1->A1_CGC,PicPes(RetPessoa(SA1->A1_CGC))),1,at("%",transform(SA1->A1_CGC,PicPes(RetPessoa(SA1->A1_CGC))))-1), oFont12)
+	oPrinter:Say( 140, 480, "IE: ", oFont12N)
+	oPrinter:Say( 140, 495, SA1->A1_INSCR, oFont12)
 	
 	// Dados Orçamento
 	oPrinter:Box( 145, 000, 205, 603)
@@ -134,7 +136,7 @@ Do While SCJ->(! Eof()) .And. (SCJ->CJ_FILIAL+SCJ->CJ_NUM >= xFilial('SCJ')+MV_P
 	oPrinter:Say( 175, 005, 'Moeda: '      , oFont12N)
 	oPrinter:Say( 175, 053, cSimbMoed+' ('+cDescMoed+')', oFont12)
 	
-	oPrinter:Say( 190, 005, "O PRAZO MEDIO DE ENTREGA:  " + Alltrim(Posicione("SX5",1,xFilial("SX5")+"12"+SA1->A1_EST,"X5_DESCSPA")) + " APÓS FATURAMENTO", oFont12)
+	oPrinter:Say( 190, 005, "O PRAZO MEDIO DE ENTREGA:  " + Alltrim(Posicione("SX5",1,xFilial("SX5")+"Z1"+SA1->A1_EST,"X5_DESCSPA")) + " APÓS FATURAMENTO", oFont12)	
 	oPrinter:Say( 200, 005, "O PRAZO DE FATURAMENTO SERÁ ATÉ 7 DIAS ÚTEIS APÓS APROVAÇÃO DO ORÇAMENTO" , oFont12)
 	
 	nLin := 205
@@ -179,6 +181,7 @@ oPrinter:Say( 030, 110, AllTrim(SM0->M0_ENDCOB) + " - " + AllTrim(SM0->M0_BAIRCO
 oPrinter:Say( 045, 110, "CNPJ: " + Transform(SM0->M0_CGC,PesqPict("SA1","A1_CGC"))+ " - CEP: " + Transform(AllTrim(SM0->M0_CEPCOB),PesqPict("SA1","A1_CEP")), oFont12)
 oPrinter:Say( 060, 110, "www.conducopper.com", oFont12)
 oPrinter:Say( 075, 110, "sac@conducopper.com", oFont12)
+oPrinter:Say( 090, 110, 'Fone: '+SM0->M0_TEL, oFont12)
 
 // Numero Orçamento
 oPrinter:Box( 000, 450, 100, 603)
@@ -189,6 +192,8 @@ oPrinter:Say( 035, 460, 'Data de Emissão: '   , oFont12N)
 oPrinter:Say( 035, 540, DtoC(SCJ->CJ_EMISSAO) , oFont12)
 oPrinter:Say( 055, 460, 'Vendedor: ', oFont12N)
 oPrinter:Say( 055, 505, Capital(Left(SA3->A3_NOME,20)), oFont12)
+oPrinter:Say( 075, 460, 'Usuário: ', oFont12N)
+oPrinter:Say( 075, 505, AllTrim(PswRet()[1][2]), oFont12)
 
 nLin := 100
 
@@ -370,7 +375,7 @@ sfPrtCabIt()
 // Realiza a Impressão dos itens
 For nCntFor1 := 1 To Len(aItens)
 	
-	If nLin > 660
+	If nLin > 650
 		oPrinter:EndPage() //Finaliza Pagina Atual
 		// Inicia nova Pagina
 		nPag ++
@@ -452,6 +457,10 @@ oPrinter:Say(nLin, 350, 'Base Retido:' , oFont10)
 oPrinter:SayAlign( nLin-8, 390, Transform(MaFisRet(,"NF_BASESOL"),PesqPict("SF2","F2_ICMSRET")), oFont10,60,10,,1) // Alinha a direita
 oPrinter:Say(nLin, 480, 'Valor Retido:', oFont10)
 oPrinter:SayAlign( nLin-8, 530, Transform(MaFisRet(,"NF_VALSOL") ,PesqPict("SF2","F2_VALBRUT")), oFont10,60,10,,1) // Alinha a direita
+
+nLin += 10
+oPrinter:Say(nLin, 480, 'Desc. Suframa:', oFont10)
+oPrinter:SayAlign( nLin-8, 530, Transform(MaFisRet(,"NF_DESCZF")  ,PesqPict("SF2","F2_DESCZFR")), oFont10,60,10,,1) // Alinha a direita
 
 nLin += 10
 oPrinter:Say(nLin, 480, 'Valor Total:', oFont10N)

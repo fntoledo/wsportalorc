@@ -64,9 +64,11 @@ Classe de Lista de Produtos para realizar a serialização do objeto
 Class PrtListaProdutos
 	
 	Data Produtos
+	Data nTotalRegistros   As Integer
 	
 	Method New() Constructor
 	Method Add() 
+	Method SetTotReg() 
 	
 EndClass
 
@@ -82,6 +84,13 @@ Return(Self)
 //
 Method Add(oProduto) Class PrtListaProdutos
 	Aadd(::Produtos, oProduto)
+Return
+
+//
+// Informa Total de Registros
+//
+Method SetTotReg(nTotReg) Class PrtListaProdutos
+	::nTotalRegistros  := nTotReg
 Return
 
 //-------------------------------------------------------------------
@@ -123,9 +132,11 @@ Classe de Lista de clientes para realizar a serialização do objeto
 Class PrtListaClientes
 	
 	Data Clientes
+	Data nTotalRegistros   As Integer
 	
 	Method New() Constructor
 	Method Add() 
+	Method SetTotReg() 
 	
 EndClass
 
@@ -141,6 +152,13 @@ Return(Self)
 //
 Method Add(oCliente) Class PrtListaClientes
 	Aadd(::Clientes, oCliente)
+Return
+
+//
+// Informa Total de Registros
+//
+Method SetTotReg(nTotReg) Class PrtListaClientes
+	::nTotalRegistros  := nTotReg
 Return
 
 //-------------------------------------------------------------------
@@ -253,9 +271,11 @@ serialização do objeto
 Class PrtListaOrcamentos
 	
 	Data Orcamentos
+	Data nTotalRegistros   As Integer
 	
 	Method New() Constructor
 	Method Add() 
+	Method SetTotReg() 
 	
 EndClass
 
@@ -271,6 +291,13 @@ Return(Self)
 //
 Method Add(oOrcamento) Class PrtListaOrcamentos
 	Aadd(::Orcamentos, oOrcamento)
+Return
+
+//
+// Informa Total de Registros
+//
+Method SetTotReg(nTotReg) Class PrtListaOrcamentos
+	::nTotalRegistros  := nTotReg
 Return
 
 //-------------------------------------------------------------------
@@ -325,9 +352,11 @@ serialização do objeto
 Class PrtListaVendedores
 	
 	Data Vendedores
+	Data nTotalRegistros   As Integer
 	
 	Method New() Constructor
 	Method Add() 
+	Method SetTotReg() 
 	
 EndClass
 
@@ -343,6 +372,13 @@ Return(Self)
 //
 Method Add(oVendedor) Class PrtListaVendedores
 	Aadd(::Vendedores, oVendedor)
+Return
+
+//
+// Informa Total de Registros
+//
+Method SetTotReg(nTotReg) Class PrtListaVendedores
+	::nTotalRegistros  := nTotReg
 Return
 
 //-------------------------------------------------------------------
@@ -700,9 +736,11 @@ serialização do objeto
 Class PrtListaTransportadoras
 	
 	Data Transportadoras
+	Data nTotalRegistros   As Integer
 	
 	Method New() Constructor
 	Method Add() 
+	Method SetTotReg() 
 	
 EndClass
 
@@ -718,6 +756,13 @@ Return(Self)
 //
 Method Add(oTransportadora) Class PrtListaTransportadoras
 	Aadd(::Transportadoras, oTransportadora)
+Return
+
+//
+// Informa Total de Registros
+//
+Method SetTotReg(nTotReg) Class PrtListaTransportadoras
+	::nTotalRegistros  := nTotReg
 Return
 
 //-------------------------------------------------------------------
@@ -920,3 +965,76 @@ Method New(cCodCli, cLojCli, cCGC, cEnd, cBairro, cMun, cUF, cCEP, nLimCred, dDt
 	::cGrauRisco            := AllTrim(cRisco)
 	::nMaiorSaldo           := nMaiorSld
 Return(Self)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtPesquisa
+Classe de pesquisa para realizar a serialização do objeto
+
+@author Felipe Toledo
+@since 29/07/17
+@version 1.0
+@type Class
+/*/
+//-------------------------------------------------------------------
+
+Class PrtPrtPesquisaPortal
+	
+	Data ListaClientes
+	Data ListaOrcamentos
+	Data ListaProdutos
+	Data ListaVendedores
+	Data ListaTransportadoras
+	
+	Method New() Constructor 
+	Method AddClientes()
+	Method AddOrcamentos()
+	Method AddProdutos()
+	Method AddVendedores()
+	Method AddTransportadoras()
+EndClass
+
+//
+// Metodo Contrutor
+//
+Method New() Class PrtPrtPesquisaPortal
+	::ListaClientes        := {}
+	::ListaOrcamentos      := {}
+	::ListaProdutos        := {}
+	::ListaVendedores      := {}
+	::ListaTransportadoras := {}
+Return(Self)
+
+//
+// Adiciona Clientes
+//
+Method AddClientes(oClientes) Class PrtPrtPesquisaPortal
+	Aadd(::ListaClientes, oClientes)
+Return
+
+//
+// Adiciona Orçamentos
+//
+Method AddOrcamentos(oOrcamentos) Class PrtPrtPesquisaPortal
+	Aadd(::ListaOrcamentos, oOrcamentos)
+Return
+
+//
+// Adiciona Produtos
+//
+Method AddProdutos(oProdutos) Class PrtPrtPesquisaPortal
+	Aadd(::ListaProdutos, oProdutos)
+Return
+
+//
+// Adiciona Vendedores
+//
+Method AddVendedores(oVendedores) Class PrtPrtPesquisaPortal
+	Aadd(::ListaVendedores, oVendedores)
+Return
+
+//
+// Adiciona Transportadoras
+//
+Method AddTransportadoras(oTransp) Class PrtPrtPesquisaPortal
+	Aadd(::ListaTransportadoras, oTransp)
+Return

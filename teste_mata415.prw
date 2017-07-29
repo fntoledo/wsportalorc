@@ -1,4 +1,6 @@
 #Include 'totvs.ch'
+#INCLUDE "TOPCONN.CH"
+#INCLUDE 'TbiConn.ch'
 
 //User Function teste_mata415()
 User Function teste_orc()
@@ -87,3 +89,86 @@ EndDo
 RestArea(aArea)
 
 Return(cCod)
+
+//-------------------------------------------------------------------
+User Function AJUSTADB()
+    RpcClearEnv()
+    RpcSetType(3)
+    RpcSetEnv("99","01")
+    DbSelectArea("SM0")
+    SM0->(DbSeek("9901"))
+
+    DbSelectArea("SX2")
+    SX2->(DbGoTop())
+    While !SX2->(EoF())
+        cTabela := AllTrim(SX2->X2_ARQUIVO)
+        cAlias  := AllTrim(SX2->X2_CHAVE)
+        If TcCanOpen(cTabela)
+            TcRefresh(cTabela)
+            DbSelectArea(cAlias)
+            If (cAlias)->(EoF()) .AND. (cAlias)->(BoF())
+                If !Empty(Select("QRY"))
+                    DbSelectArea("QRY")
+                    DbCloseArea("QRY")
+                EndIf
+                sql :=  "SELECT COUNT(*) NREGS FROM " + cTabela
+                TCQuery sql NEW ALIAS "QRY"
+                DbSelectArea("QRY")
+                If QRY->NREGS = 0
+                    If !Empty(Select(cAlias))
+                        DbSelectArea(cAlias)
+                        DbCloseArea(cAlias)
+                    EndIf
+                    If !Empty(Select("QRY"))
+                        DbSelectArea("QRY")
+                        DbCloseArea("QRY")
+                    EndIf
+                    ConOut("Apagar tabela "+cTabela)
+                    lOk := TcDelFile(cTabela)
+                    If !lOk
+                        ConOut("Falha ao apagar "+cTabela+" : "+ TcSqlError())
+                    EndIf
+                Else
+                	cPrefixo := If(Left(cTabela,1)=='S',Right(cTabela,2),cTabela)
+                	
+                	cFieldFil := cPrefixo+'_FILIAL'
+                	
+                	If (cTabela)->(FieldPos(cFieldFil)) > 0
+                		
+                		sqlExec :=  "DELETE FROM " + cTabela + " WHERE "+cFieldFil+" = '0101'"
+	                	TCSQLExec(sqlExec)
+	                	
+	                	sqlUpd :=  "UPDATE " + cTabela + " SET "+cFieldFil+" = '01' WHERE "+cFieldFil+" = '0201'"
+	                	TCSQLExec(sqlUpd)
+	                EndIf
+	                
+	                cFieldFil := cPrefixo+'_FILORIG'
+	                If (cTabela)->(FieldPos(cFieldFil)) > 0
+	                	sqlUpd :=  "UPDATE " + cTabela + " SET "+cFieldFil+" = '01' WHERE "+cFieldFil+" = '0201'"
+	                	TCSQLExec(sqlUpd)
+	                EndIf
+	                
+	                cFieldFil := cPrefixo+'_FILORI'
+	                If (cTabela)->(FieldPos(cFieldFil)) > 0
+	                	sqlUpd :=  "UPDATE " + cTabela + " SET "+cFieldFil+" = '01' WHERE "+cFieldFil+" = '0201'"
+	                	TCSQLExec(sqlUpd)
+	                EndIf
+	                
+	                cFieldFil := cPrefixo+'MSFIL'
+	                If (cTabela)->(FieldPos(cFieldFil)) > 0
+	                	sqlUpd :=  "UPDATE " + cTabela + " SET "+cFieldFil+" = '01' WHERE "+cFieldFil+" = '0201'"
+	                	TCSQLExec(sqlUpd)
+	                EndIf
+
+                EndIf
+            EndIf
+            If !Empty(Select(cAlias))
+                DbSelectArea(cAlias)
+                DbCloseArea(cAlias)
+            EndIf
+        EndIf
+        SX2->(DbSkip())
+    EndDo
+    
+    ConOut("Termino da Rotina")
+Return

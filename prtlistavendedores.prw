@@ -36,7 +36,13 @@ Local cWhere     := ''
 Local cFiltroSql := Self:CFILTROSQL
 Local aBoxTipo   := RetSx3Box( Posicione('SX3', 2, 'A3_TIPO', 'X3CBox()' ),,, Len(SA3->A3_TIPO) )
 Local cTipo      := ''
+Local nTotReg    := 0 // Total de Registros
 Local lRet       := .T.
+
+// Converte string base64 para formato original
+If !Empty(cFiltroSql)
+	cFiltroSql := Decode64(cFiltroSql)
+EndIf
 
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
@@ -70,14 +76,15 @@ BeginSql Alias cAliasQry
 EndSql
 
 If (cAliasQry)->( ! Eof() )
+	
 	//Cria um objeto da classe para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotReg++,;
 	cTipo := A3_TIPO+"-"+AllTrim( aBoxTipo[ Ascan( aBoxTipo, { |x| x[ 2 ] == A3_TIPO} ), 3 ]),;
 	oObjResp:Add( PrtItListaVendedores():New( A3_COD, A3_NOME, A3_CGC, cTipo, A3_TABELA, A3_TABELAF, A3_COMIS ) );
 	}))
-Else
-	SetRestFault(400, "Lista de vendedores vazia")
-	lRet := .F.
+	
+	oObjResp:SetTotReg(nTotReg)
 EndIf
 
 // --> Transforma o objeto em uma string json

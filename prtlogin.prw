@@ -45,21 +45,44 @@ Local cCodUsr   := RetCodUsr() // Codigo do Usuário
 Local cCodVen   := U_PrtCodVen() // Codigo do Vendedor
 Local dDtAcesso := U_PrtDtUAc() // Data do último Acesso
 Local cHrAcesso := U_PrtHrAc(dDtAcesso) // Hora do último acesso
+Local cGrpAuth  := SuperGetMV('ES_GRPPRT',.F.,'000000,000001') // Grupo de Usuários Autorizados a utilizar o Portal
+Local aGrpUsr   := UsrRetGrp()
+Local lRet      := .F.
 
-//Cria um objeto da classe produtos para fazer a serialização na função FWJSONSerialize
-oObjResp := PrtLogin():New(cUserName,; // 1. Nome do usuário
-                              cCodUsr,; // 2. Codigo do usuário
-                              UsrFullName(cCodUsr),; // 3. Nome completo
-                              UsrRetMail(cCodUsr),; // 4. e-mail
-                              cCodVen,;  // 5. Codigo representante
-                              dDtAcesso,; // 6. Data do ultimo acesso
-                              cHrAcesso) // 7. Hora do ultimo acesso
+// Verifica se usuário faz parte do Grupo Administradores
+If FWIsAdmin( cCodUsr )
+	lRet := .T.
+Else
+	// Verifica se usuário possui acesso
+	For nCntFor := 1 To Len(aGrpUsr)
+		lRet := aGrpUsr[nCntFor] $ cGrpAuth
+		If lRet
+			Exit
+		EndIf
+	Next nCntFor
+EndIf
 
-//-- Grava Log indicando acesso usuário
-ProcLogAtu('MENSAGEM','Acesso portal',Nil,'PRTLOGIN')
+If !lRet
+	SetRestFault(400, "Usuario nao autorizado")
+	lRet := .F.
+EndIf
 
-// --> Transforma o objeto de produtos em uma string json
-cJson := FWJsonSerialize(oObjResp,.F.)
+If lRet
+	//Cria um objeto da classe produtos para fazer a serialização na função FWJSONSerialize
+	oObjResp := PrtLogin():New(cUserName,; // 1. Nome do usuário
+	                              cCodUsr,; // 2. Codigo do usuário
+	                              UsrFullName(cCodUsr),; // 3. Nome completo
+	                              UsrRetMail(cCodUsr),; // 4. e-mail
+	                              cCodVen,;  // 5. Codigo representante
+	                              dDtAcesso,; // 6. Data do ultimo acesso
+	                              cHrAcesso) // 7. Hora do ultimo acesso
+	
+	//-- Grava Log indicando acesso usuário
+	ProcLogAtu('MENSAGEM','Acesso portal',Nil,'PRTLOGIN')
+	
+	// --> Transforma o objeto de produtos em uma string json
+	cJson := FWJsonSerialize(oObjResp,.F.)
+EndIf
 
 // define o tipo de retorno do método
 ::SetContentType("application/json")
@@ -67,4 +90,4 @@ cJson := FWJsonSerialize(oObjResp,.F.)
 // --> Envia o JSON Gerado para a aplicação Client
 ::SetResponse(cJson)
 
-Return(.T.)
+Return(lRet)
