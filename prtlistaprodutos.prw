@@ -42,7 +42,8 @@ Local cPagDe     := ''
 Local cPagAte    := ''
 Local cWhere     := ''
 Local cWhere2    := ''
-Local nTotReg    := 0
+Local nTotReg    := 0 // Total de Registros na consulta
+Local nTotPag    := 0 // Total de Registros na Pagina
 Local lRet       := .T.
 
 // Converte string base64 para formato original
@@ -89,9 +90,13 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe produtos para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotPag++,;
 	oObjResp:Add( PrtItListaProdutos():New( B1_COD, B1_DESC ) );
 	}))
 EndIf
+
+// Total de registros da pagina
+oObjResp:SetRegPag(nTotPag)
 
 (cAliasQry)->(DbCloseArea())
 

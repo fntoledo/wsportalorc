@@ -13,6 +13,7 @@ Serviço REST de lista de orcamentos de venda para oportal de vendas
 //-------------------------------------------------------------------
 WSRESTFUL PRTLISTAORCAMENTOS DESCRIPTION "Serviço REST de lista de orçamentos de vendas para o portal de vendas"
 
+WSDATA CCODUSR    As String // Usuário Portal
 WSDATA CFILTROSQL As String OPTIONAL //String com filtro SQL
 WSDATA NPAGE      As Integer OPTIONAL // Numero da pagina
 WSDATA NLIMPAG    As Integer OPTIONAL // Numero Maximo de registros por pagina
@@ -29,13 +30,14 @@ Processa as informações e retorna o json
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD GET WSRECEIVE CFILTROSQL, NPAGE, NLIMPAG WSSERVICE PRTLISTAORCAMENTOS
+WSMETHOD GET WSRECEIVE CCODUSR, CFILTROSQL, NPAGE, NLIMPAG WSSERVICE PRTLISTAORCAMENTOS
+Local cUsrPrt    := Self:CCODUSR
 Local oObjResp   := Nil
 Local cJson      := ''
 Local cAliasQry  := GetNextAlias()
 Local cAliasTot  := ''
 Local oObjResp   := PrtListaOrcamentos():New() // --> Objeto que será serializado
-Local cCodVen    := U_PrtCodVen() // Codigo do Vendedor
+Local cCodVen    := '' // Codigo do Vendedor
 Local cFiltroSql := Self:CFILTROSQL
 Local cWhere     := ''
 Local cWhere2    := ''
@@ -45,13 +47,24 @@ Local nPage      := Self:NPAGE
 Local nRegPag    := Self:NLIMPAG // Registros por pagina
 Local cPagDe     := ''
 Local cPagAte    := ''
-Local nTotReg    := 0
+Local nTotReg    := 0 // Total de Registros na consulta
+Local nTotPag    := 0 // Total de Registros na Pagina
 Local lRet       := .T.
+
+// Valida CODIGO usuario portal
+lRet := U_PrtVldUsr(cUsrPrt)
+If !lRet
+	SetRestFault(400, "Codigo usuario invalido")
+	lRet := .F.
+	Return(lRet)
+EndIf
 
 // Converte string base64 para formato original
 If !Empty(cFiltroSql)
 	cFiltroSql := Decode64(cFiltroSql)
 EndIf
+
+cCodVen := U_PrtCodVen(cUsrPrt) // Codigo do Vendedor
 
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
@@ -101,10 +114,14 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotPag++,;
 	cStatus := CJ_STATUS+"-"+AllTrim( aBoxStat[ Ascan( aBoxStat, { |x| x[ 2 ] == CJ_STATUS} ), 3 ]),;
 	oObjResp:Add( PrtItListaOrcamentos():New( CJ_NUM, CJ_EMISSAO, CJ_CLIENTE, CJ_LOJA, A1_NOME, A1_CGC, cStatus ) );
 	}))
 EndIf
+
+// Total de registros da pagina
+oObjResp:SetRegPag(nTotPag)
 
 (cAliasQry)->(DbCloseArea())
 

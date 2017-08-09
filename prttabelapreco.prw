@@ -65,8 +65,11 @@ If lRet .And. Empty(cCodTab)
 EndIf
 
 If lRet	
+	DA0->(DbSetOrder(1)) // DA0_FILIAL+DA0_CODTAB
+	DA0->(MsSeek(xFilial('DA0')+cCodTab))
+
 	// Objeto que será serializado
-	oObjResp := PrtTabelaPreco():New(cCodTab)
+	oObjResp := PrtTabelaPreco():New(cCodTab,DA0->DA0_DESCRI)
 EndIf
 
 // --> Transforma o objeto de produtos em uma string json

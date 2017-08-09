@@ -13,6 +13,8 @@ Serviço REST de orcamento de venda para o portal de vendas
 //-------------------------------------------------------------------
 WSRESTFUL PRTORCAMENTO DESCRIPTION "Serviço REST de orcamento de venda para o portal de vendas"
 
+WSDATA CCODUSR    As String // Usuário Portal
+
 WSMETHOD GET    DESCRIPTION "Retorna informações do orcamento de venda para o portal de vendas" WSSYNTAX "/PRTORCAMENTO/{codigo_orcamento} "
 WSMETHOD POST   DESCRIPTION "Inclusão do orçamento de venda vindo do portal de vendas"          WSSYNTAX "/PRTORCAMENTO "
 WSMETHOD PUT    DESCRIPTION "Alteração do orçamento de venda vindo do portal de vendas"         WSSYNTAX "/PRTORCAMENTO "
@@ -140,7 +142,8 @@ Serviço REST de Inclusão do Orçamento de Venda
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD POST WSSERVICE PRTORCAMENTO
+WSMETHOD POST WSRECEIVE CCODUSR WSSERVICE PRTORCAMENTO
+Local cUsrPrt    := Self:CCODUSR
 Local cJSonReq 	 := Self:GetContent() // Pega a string do JSON de requisicao
 Local oParseJSON := Nil 
 Local cJson      := ''
@@ -152,6 +155,14 @@ Local lRet       := .T.
 
 Private lMsErroAuto    := .F.
 Private lAutoErrNoFile := .T.
+
+// Valida CODIGO usuario portal
+lRet := U_PrtVldUsr(cUsrPrt)
+If !lRet
+	SetRestFault(400, "Codigo usuario invalido")
+	lRet := .F.
+	Return(lRet)
+EndIf
 
 // necessário declarar. O WebService não esta iniciando a variavel publica __LOCALDRIVE
 __LOCALDRIVE := "DBFCDX"
@@ -171,6 +182,7 @@ AAdd(aCabec ,{"CJ_TABELA"   ,oParseJSON:CABECALHO:cTabelaPreco          ,Nil})
 AAdd(aCabec ,{"CJ_TPFRETE"  ,oParseJSON:CABECALHO:cTipoFrete            ,Nil})
 AAdd(aCabec ,{"CJ_TRANSP"   ,oParseJSON:CABECALHO:cTransportadora       ,Nil})
 AAdd(aCabec ,{"CJ_PORTAL"   ,'S'                                        ,Nil})
+AAdd(aCabec ,{"CJ_USRPRT"   ,cUsrPrt                                    ,Nil})
 
 For nCntFor := 1 To Len(oParseJSON:ITENS)
 	aLinha := {}

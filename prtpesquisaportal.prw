@@ -13,6 +13,7 @@ Transportadoras e Vendedores em um único request
 //-------------------------------------------------------------------
 WSRESTFUL PRTPESQUISAPORTAL DESCRIPTION "Serviço REST para pesquida nas entidades: Clientes, Orçamentos, Produtos, Vendedores e Transportadoras"
 
+WSDATA CCODUSR    As String // Usuário Portal
 WSDATA CPESQUISA  As String  OPTIONAL // String para filtro nas entidades
 WSDATA NPAGE      As Integer OPTIONAL // Numero da pagina
 WSDATA NLIMPAG    As Integer OPTIONAL // Numero Maximo de registros por pagina
@@ -29,7 +30,8 @@ Processa as informações e retorna o json
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD GET WSRECEIVE CPESQUISA, NPAGE, NLIMPAG WSSERVICE PRTPESQUISAPORTAL
+WSMETHOD GET WSRECEIVE CCODUSR, CPESQUISA, NPAGE, NLIMPAG WSSERVICE PRTPESQUISAPORTAL
+Local cUsrPrt    := Self:CCODUSR
 Local cJson      := ''
 Local cAliasQry  := GetNextAlias()
 Local cAliasTot  := ''
@@ -39,9 +41,7 @@ Local oOrcamentos:= PrtListaOrcamentos():New()
 Local oProdutos  := PrtListaProdutos():New()
 Local oVendedores:= PrtListaVendedores():New()
 Local oTransp    := PrtListaTransportadoras():New()
-
-
-Local cCodVen    := U_PrtCodVen() // Codigo do Vendedor
+Local cCodVen    := '' // Codigo do Vendedor
 Local cWhere     := ''
 Local cWhere2    := ''
 Local cPesquisa  := Self:CPESQUISA
@@ -49,16 +49,29 @@ Local nPage      := Self:NPAGE
 Local nRegPag    := Self:NLIMPAG // Registros por pagina
 Local cPagDe     := ''
 Local cPagAte    := ''
-Local nTotReg    := 0 // Total de Registros
+Local nTotReg    := 0 // Total de Registros na consulta
+Local nTotPag    := 0 // Total de Registros na Pagina
 Local aBoxStat   := RetSx3Box( Posicione('SX3', 2, 'CJ_STATUS', 'X3CBox()' ),,, Len(SCJ->CJ_STATUS) )
 Local cStatus    := ''
 Local aBoxTipo   := RetSx3Box( Posicione('SX3', 2, 'A3_TIPO', 'X3CBox()' ),,, Len(SA3->A3_TIPO) )
 Local cTipo      := ''
 Local lRet       := .T.
 
+// Valida CODIGO usuario portal
+lRet := U_PrtVldUsr(cUsrPrt)
+If !lRet
+	SetRestFault(400, "Codigo usuario invalido")
+	lRet := .F.
+	Return(lRet)
+EndIf
+
+cCodVen  := U_PrtCodVen(cUsrPrt) // Codigo do Vendedor
+
 //-------------------------------------
 // CLIENTES
 //-------------------------------------
+nTotPag := 0
+
 cWhere :="%"
 If ! Empty(cCodVen)
 	// Filtra vendedor
@@ -99,9 +112,13 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotPag++,;
 	oClientes:Add( PrtItListaClientes():New( A1_COD, A1_LOJA, A1_NOME, A1_CGC, A1_VEND ) );
 	}))
 EndIf
+
+// Total de registros da pagina
+oClientes:SetRegPag(nTotPag)
 
 (cAliasQry)->(DbCloseArea())
 
@@ -130,6 +147,7 @@ oObjResp:AddClientes(oClientes)
 //-------------------------------------
 // Orçamentos
 //-------------------------------------
+nTotPag := 0
 nTotReg := 0
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
@@ -170,11 +188,15 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotPag++,;
 	cStatus := CJ_STATUS+"-"+AllTrim( aBoxStat[ Ascan( aBoxStat, { |x| x[ 2 ] == CJ_STATUS} ), 3 ]),;
 	oOrcamentos:Add( PrtItListaOrcamentos():New( CJ_NUM, CJ_EMISSAO, CJ_CLIENTE, CJ_LOJA, A1_NOME, A1_CGC, cStatus ) );
 	}))
 	
 EndIf
+
+// Total de registros da pagina
+oOrcamentos:SetRegPag(nTotPag)
 
 (cAliasQry)->(DbCloseArea())
 
@@ -208,8 +230,8 @@ oObjResp:AddOrcamentos(oOrcamentos)
 //-------------------------------------
 // Produtos
 //-------------------------------------
+nTotPag := 0
 nTotReg := 0
-
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
 //-------------------------------------------------------------
@@ -239,9 +261,13 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe produtos para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotPag++,;
 	oProdutos:Add( PrtItListaProdutos():New( B1_COD, B1_DESC ) );
 	}))
 EndIf
+
+// Total de registros da pagina
+oProdutos:SetRegPag(nTotPag)
 
 (cAliasQry)->(DbCloseArea())
 
@@ -271,6 +297,7 @@ oObjResp:AddProdutos(oProdutos)
 //-------------------------------------
 // Vendedores
 //-------------------------------------
+nTotPag := 0
 nTotReg := 0
 
 //-------------------------------------------------------------
@@ -289,11 +316,14 @@ cWhere +="%"
 
 // Query para listar os dados
 BeginSql Alias cAliasQry
-	SELECT A3_COD, A3_NOME, A3_CGC, A3_TIPO, A3_TABELA, A3_TABELAF, A3_COMIS
+    SELECT A3_COD, A3_NOME, A3_CGC, A3_TIPO, A3_TABELA, A3_TABELAF, A3_COMIS
+      FROM (
+	SELECT ROW_NUMBER() OVER (ORDER BY A3_COD) AS LINHA, A3_COD, A3_NOME, A3_CGC, A3_TIPO, A3_TABELA, A3_TABELAF, A3_COMIS
 	  FROM %Table:SA3% SA3
 	 WHERE SA3.A3_FILIAL = %xFilial:SA3%
 	   %Exp:cWhere%
-	   AND SA3.%notDel%
+	   AND SA3.%notDel%) TRB
+	   %Exp:cWhere2%
 	 ORDER
 	    BY A3_COD
 EndSql
@@ -301,21 +331,42 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
-	nTotReg++,;
+	nTotPag++,;
 	cTipo := A3_TIPO+"-"+AllTrim( aBoxTipo[ Ascan( aBoxTipo, { |x| x[ 2 ] == A3_TIPO} ), 3 ]),;
 	oVendedores:Add( PrtItListaVendedores():New( A3_COD, A3_NOME, A3_CGC, cTipo, A3_TABELA, A3_TABELAF, A3_COMIS ) );
 	}))
+EndIf
+
+// Total de registros da pagina
+oVendedores:SetRegPag(nTotPag)
+
+(cAliasQry)->(DbCloseArea())
+
+If lRet .And. (Empty(nPage) .Or. nPage <= 1)
+	cAliasTot := GetNextAlias()
+	// Query para listar os dados
+	BeginSql Alias cAliasTot
+		SELECT COUNT(*) TOTALREG
+		  FROM %Table:SA3% SA3
+		 WHERE SA3.A3_FILIAL = %xFilial:SA3%
+		  %Exp:cWhere%
+		  AND SA3.%notDel% 
+	EndSql
+	If (cAliasTot)->( ! Eof() )
+		nTotReg := (cAliasTot)->TOTALREG
+	EndIf
+	
+	(cAliasTot)->(DbCloseArea())
 	
 	oVendedores:SetTotReg(nTotReg)
 EndIf
-
-(cAliasQry)->(DbCloseArea())
 
 oObjResp:AddVendedores(oVendedores)
 
 //-------------------------------------
 // Transportadoras
 //-------------------------------------
+nTotPag := 0
 nTotReg := 0
 
 //-------------------------------------------------------------
@@ -345,9 +396,13 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotPag++,;
 	oTransp:Add( PrtItListaTransportadoras():New( A4_COD, A4_NOME, A4_CGC ) );
 	}))
 EndIf
+
+// Total de registros da pagina
+oTransp:SetRegPag(nTotPag)
 
 (cAliasQry)->(DbCloseArea())
 

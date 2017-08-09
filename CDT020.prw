@@ -38,7 +38,7 @@ Monta a Impressão do relatorio
 @type Function
 /*/
 //-------------------------------------------------------------------
-Static Function sfMontaRel(cFilePrint,lJob)
+Static Function sfMontaRel(cFilePrint,lJob,cUsrPrt)
 // Parametros FwMsPrinter
 Local cDirPDF       := SuperGetMV('ES_DIRBPDF',.F.,'\PDF\')
 Local cPathInServer := cDirPDF
@@ -48,14 +48,29 @@ Local aBoxtTpFr     := RetSx3Box( Posicione('SX3', 2, 'CJ_TPFRETE', 'X3CBox()' )
 Local cTpFrete      := SCJ->CJ_TPFRETE+"-"+AllTrim( aBoxtTpFr[ Ascan( aBoxtTpFr, { |x| x[ 2 ] == SCJ->CJ_TPFRETE} ), 3 ])
 Local cSimbMoed     := SuperGetMV('MV_SIMB' + Alltrim(Str(SCJ->CJ_MOEDA)), .F., 'R$')
 Local cDescMoed     := SuperGetMv('MV_MOEDA'+ Alltrim(Str(SCJ->CJ_MOEDA)), .F., 'REAL')
+Local nPrzFat       := SuperGetMv('ES_PRZFAT', .F., 7) // Prazo de Faturamento
+Local cCodVen       := '' // Codigo Vendedor
+Local cNameUsr      := '' // Nome do Usuario
 
 Default cFilePrint  := "ORC_"+Dtos(MSDate())+StrTran(Time(),":","")
 Default lJob        := .F.
+Default cUsrPrt     := ''
 
 // Controle de Impressao
 Private oPrinter    := Nil
 Private nLin        := 0
 Private nPag        := 1
+
+If lJob .And. ! Empty(cUsrPrt)
+	AI3->(DbSetOrder(1)) // AI3_FILIAL+AI3_CODUSU
+	AI3->(DbSeek(xFilial('AI3')+cUsrPrt))
+
+	cNameUsr := AllTrim(AI3->AI3_LOGIN)
+Else
+	cNameUsr := AllTrim(PswRet()[1][2])
+	// Se impressao for via Protheus, filtra o vendedor
+	cCodVen := U_F0010121(RetCodUsr())
+EndIf
 
 // Objeto de Impressao
 oPrinter := FWMSPrinter():New(cFilePrint, IMP_PDF, lAdjustToLegacy, If(lJob,cPathInServer,Nil), .T.,.F.,,"PDF",.T.,.F.,.F.,.F.,)
@@ -80,8 +95,14 @@ fErase(oPrinter:cPathPDF+cFilePrint+'.pdf')
 SCJ->(DbSetOrder(1)) // CJ_FILIAL+CJ_NUM+CJ_CLIENTE+CJ_LOJA
 SCJ->(MsSeek(xFilial('SCJ')+MV_PAR01, .T. ))
 
-Do While SCJ->(! Eof()) .And. (SCJ->CJ_FILIAL+SCJ->CJ_NUM >= xFilial('SCJ')+MV_PAR01) .And. (SCJ->CJ_FILIAL+SCJ->CJ_NUM <= xFilial('SCJ')+MV_PAR02) 
-	
+Do While SCJ->(! Eof()) .And. (SCJ->CJ_FILIAL+SCJ->CJ_NUM >= xFilial('SCJ')+MV_PAR01) .And. (SCJ->CJ_FILIAL+SCJ->CJ_NUM <= xFilial('SCJ')+MV_PAR02)
+
+	// Se usuario possui codigo de vendedor, valida a impressao
+	If !Empty(cCodVen) .And. cCodVen <> SCJ->CJ_VEND1
+		SCJ->(DbSkip())
+		Loop
+	EndIf
+
 	// Posiciona no Cliente
 	SA1->(DbSetOrder(1))
 	SA1->(MsSeek(xFilial('SA1')+SCJ->CJ_CLIENTE+SCJ->CJ_LOJA))
@@ -98,12 +119,13 @@ Do While SCJ->(! Eof()) .And. (SCJ->CJ_FILIAL+SCJ->CJ_NUM >= xFilial('SCJ')+MV_P
 	SE4->(DbSetOrder(1))
 	SE4->(MsSeek(xFilial('SE4')+SCJ->CJ_CONDPAG))
 	
+	
 	cTpFrete      := SCJ->CJ_TPFRETE+"-"+AllTrim( aBoxtTpFr[ Ascan( aBoxtTpFr, { |x| x[ 2 ] == SCJ->CJ_TPFRETE} ), 3 ])
 	cSimbMoed     := SuperGetMV('MV_SIMB' + Alltrim(Str(SCJ->CJ_MOEDA)), .F., 'R$')
 	cDescMoed     := SuperGetMv('MV_MOEDA'+ Alltrim(Str(SCJ->CJ_MOEDA)), .F., 'REAL')
 
 	// Imprime Cabeçalho
-	sfPrtCab()
+	sfPrtCab(cNameUsr)
 	
 	// Dados do cliente
 	oPrinter:Box( 100, 000, 145, 603)
@@ -137,12 +159,12 @@ Do While SCJ->(! Eof()) .And. (SCJ->CJ_FILIAL+SCJ->CJ_NUM >= xFilial('SCJ')+MV_P
 	oPrinter:Say( 175, 053, cSimbMoed+' ('+cDescMoed+')', oFont12)
 	
 	oPrinter:Say( 190, 005, "O PRAZO MEDIO DE ENTREGA:  " + Alltrim(Posicione("SX5",1,xFilial("SX5")+"Z1"+SA1->A1_EST,"X5_DESCSPA")) + " APÓS FATURAMENTO", oFont12)	
-	oPrinter:Say( 200, 005, "O PRAZO DE FATURAMENTO SERÁ ATÉ 7 DIAS ÚTEIS APÓS APROVAÇÃO DO ORÇAMENTO" , oFont12)
-	
+	oPrinter:Say( 200, 005, "O PRAZO DE FATURAMENTO SERÁ ATÉ " + cValToChar(nPrzFat) + " DIAS ÚTEIS APÓS APROVAÇÃO DO ORÇAMENTO" , oFont12)
+
 	nLin := 205
 	
 	// Impressao dos Itens
-	sfPrtItens()
+	sfPrtItens(cNameUsr)
 	
 	// Finaliza pagina
 	oPrinter:EndPage()
@@ -166,7 +188,7 @@ Impressao do Cabeçalho do Orçamento de Venda
 @type Function
 /*/
 //-------------------------------------------------------------------
-Static Function sfPrtCab()
+Static Function sfPrtCab(cNameUsr)
 // Imagem Logo
 Local cLogo         := FisxLogo("1")
 
@@ -193,7 +215,7 @@ oPrinter:Say( 035, 540, DtoC(SCJ->CJ_EMISSAO) , oFont12)
 oPrinter:Say( 055, 460, 'Vendedor: ', oFont12N)
 oPrinter:Say( 055, 505, Capital(Left(SA3->A3_NOME,20)), oFont12)
 oPrinter:Say( 075, 460, 'Usuário: ', oFont12N)
-oPrinter:Say( 075, 505, AllTrim(PswRet()[1][2]), oFont12)
+oPrinter:Say( 075, 505, cNameUsr   , oFont12)
 
 nLin := 100
 
@@ -237,7 +259,7 @@ Impressao dos Itens do Orçamento de Venda
 @type Function
 /*/
 //-------------------------------------------------------------------
-Static Function sfPrtItens()
+Static Function sfPrtItens(cNameUsr)
 // Auxiliares
 Local aDescri       := {}
 Local nCntFor1      := 0
@@ -379,7 +401,7 @@ For nCntFor1 := 1 To Len(aItens)
 		oPrinter:EndPage() //Finaliza Pagina Atual
 		// Inicia nova Pagina
 		nPag ++
-		sfPrtCab() // Impreme cabeçalho
+		sfPrtCab(cNameUsr) // Impreme cabeçalho
 		
 		sfPrtCabIt() // Imprime Cabeçalho dos Itens
 	EndIf
@@ -393,10 +415,10 @@ For nCntFor1 := 1 To Len(aItens)
 	
 	oPrinter:Say( nLin, 285, aItens[nCntFor1][3]                                                      , oFont10)
 	oPrinter:SayAlign( nLin-8, 305, Transform(aItens[nCntFor1][4],PesqPictQt("CK_QTDVEN"))            , oFont10,60,10,,1) // Alinha a direita
-    oPrinter:SayAlign( nLin-8, 375, Transform(aItens[nCntFor1][5],PesqPict("SCK","CK_PRCVEN"))        , oFont10,50,10,,1) // Alinha a direita
+	oPrinter:SayAlign( nLin-8, 375, Transform(aItens[nCntFor1][5],PesqPict("SCK","CK_PRCVEN"))        , oFont10,50,10,,1) // Alinha a direita
 	oPrinter:SayAlign( nLin-8, 430, Transform(MaFisRet(nCntFor1,"IT_ALIQIPI"),"@E 99.99")             , oFont10,20,10,,1) // Alinha a direita
 	oPrinter:SayAlign( nLin-8, 460, Transform(MaFisRet(nItem,"IT_ALIQICM"),"@E 99.99")                , oFont10,20,10,,1) // Alinha a direita
-    oPrinter:SayAlign( nLin-8, 490, Transform(aItens[nCntFor1][6]+nValImp,PesqPict("SCK","CK_VALOR")) , oFont10,60,10,,1) // Alinha a direita
+	oPrinter:SayAlign( nLin-8, 490, Transform(aItens[nCntFor1][6]+nValImp,PesqPict("SCK","CK_VALOR")) , oFont10,60,10,,1) // Alinha a direita
 	
 	oPrinter:Say( nLin, 560, DtoC(aItens[nCntFor1][7])                                                , oFont10)
 	
@@ -417,7 +439,7 @@ For nCntFor1 := 1 To Len(aItens)
 
 Next nCntFor1
 
-// Realiza a Impressão do cabeçalho dos itens
+// Imprime Totais
 nLin += 10
 oPrinter:Box( nLin, 000, nLin+15, 603)
 nLin += 10
@@ -428,7 +450,7 @@ oPrinter:SayAlign( nLin-8, 490, Transform(nTotVal,PesqPict("SCK","CK_VALOR")) , 
 nLin += 5
 
 //
-// Totais dos Impostos / Peso
+// Totais dos Impostos e Peso
 //
 
 nLin += 20
@@ -571,7 +593,7 @@ Impressão do Orçamento de venda via Job
 @type Function
 /*/
 //-------------------------------------------------------------------
-User Function CDT020JOB(cNumOrc)
+User Function CDT020JOB(cNumOrc, cUsrPrt)
 Local cFilePrint    := 'Orcamento_'+FwFilial()+'_'+cNumOrc
 Local cPerg         := 'CDT020'
 
@@ -580,7 +602,7 @@ MV_PAR01 := cNumOrc
 MV_PAR02 := cNumOrc
 
 // Impressao do Relatorio
-sfMontaRel(cFilePrint,.T.)
+sfMontaRel(cFilePrint,.T.,cUsrPrt)
 
 Return(cFilePrint)
 

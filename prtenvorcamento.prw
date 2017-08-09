@@ -13,7 +13,8 @@ Serviço REST de envio do orcamento de venda em PDF
 //-------------------------------------------------------------------
 WSRESTFUL PRTENVORCAMENTO DESCRIPTION "Serviço REST de envio do orcamento de venda em PDF por e-mail"
 
-WSDATA CEMAIL As String //E-Mail para envio do Orçamento
+WSDATA CCODUSR    As String // Usuário Portal
+WSDATA CEMAIL     As String //E-Mail para envio do Orçamento
 
 WSMETHOD POST DESCRIPTION "Envio do orçamento de venda em PDF por e-mail" WSSYNTAX "/PRTORCAMENTO/{codigo_orcamento}"
  
@@ -27,10 +28,19 @@ Processa as informações e retorna o json
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD POST WSRECEIVE CEMAIL WSSERVICE PRTENVORCAMENTO
+WSMETHOD POST WSRECEIVE CCODUSR, CEMAIL WSSERVICE PRTENVORCAMENTO
 Local cJson      := ''
+Local cUsrPrt    := Self:CCODUSR
 Local cEmail     := Self:CEMAIL
 Local lRet       := .T.
+
+// Valida CODIGO usuario portal
+lRet := U_PrtVldUsr(cUsrPrt)
+If !lRet
+	SetRestFault(400, "Codigo usuario invalido")
+	lRet := .F.
+	Return(lRet)
+EndIf
 
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
@@ -51,7 +61,7 @@ If lRet
 	SCJ->(DbSetOrder(1)) // CJ_FILIAL+CJ_NUM+CJ_CLIENTE+CJ_LOJA
 	If SCJ->(MsSeek(xFilial('SCJ')+cNumOrc))
 		// Processa o envio do e-mail
-		StartJob('U_PrtEnvOrc',GetEnvServer(),.F.,FWGrpCompany(),FWCodFil(),cNumOrc,cEmail)
+		StartJob('U_PrtEnvOrc',GetEnvServer(),.F.,FWGrpCompany(),FWCodFil(),cNumOrc,cEmail,cUsrPrt)
 		cJson := "{ENVIO: 'OK'}"
 	Else
 		SetRestFault(400, "Orcamento nao localizado")

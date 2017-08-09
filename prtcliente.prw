@@ -48,12 +48,16 @@ If lRet
 		// Objeto que será serializado
 		oObjResp := PrtCliente():New(SA1->A1_COD,;
 		                             SA1->A1_LOJA,;
+		                             SA1->A1_NOME,;
 		                             SA1->A1_CGC,;
+		                             SA1->A1_VEND,;
 		                             SA1->A1_END,;
 		                             SA1->A1_BAIRRO,;
 		                             SA1->A1_MUN,;
 		                             SA1->A1_EST,;
 		                             SA1->A1_CEP,;
+		                             '('+SA1->A1_DDD+') '+SA1->A1_TEL,;
+		                             SA1->A1_CONTATO,;
 		                             SA1->A1_LC,;
 		                             SA1->A1_PRICOM,;
 		                             SA1->A1_SALDUP,;

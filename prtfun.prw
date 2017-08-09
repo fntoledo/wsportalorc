@@ -12,6 +12,63 @@ User Function PRTFUN()
 Return
 
 //-------------------------------------------------------------------
+/*/{Protheus.doc} PrtVldUsr
+Valida CODIGO do usuário do Portal
+
+@author Felipe Toledo
+@since 07/07/17
+@type Function
+/*/
+//-------------------------------------------------------------------
+User Function PrtVldUsr(cUsrPrt)
+Local lRet     := .F.
+
+// Valida Usuário
+If Empty(cUsrPrt)
+	// Codigo do usuario nao informado
+	lRet := .F.
+Else
+	// verifica se o usuário esta cadastrado como representante
+	AI3->(DbSetOrder(1)) // AI3_FILIAL+AI3_CODUSU
+	If AI3->(MsSeek(xFilial('AI3')+cUsrPrt))
+		lRet := .T.
+	Else
+		// Codigo usuário invalido
+		lRet := .F.
+	EndIf
+EndIf
+
+Return(lRet)
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtAuth
+Autentica o Usuário do Portal
+
+@author Felipe Toledo
+@since 07/07/17
+@type Function
+/*/
+//-------------------------------------------------------------------
+User Function PrtAuth(cUsrPrt,cPassPrt)
+Local lRet      := .F.
+
+// Valida usuário
+If !Empty(cUsrPrt) .And. !Empty(cPassPrt)
+	cUsrPrt   := Decode64(cUsrPrt)
+	cPassPrt  := Decode64(cPassPrt)
+
+	AI3->(DbSetOrder(2)) // AI3_FILIAL+AI3_LOGIN
+	If AI3->(MsSeek(xFilial('AI3')+cUsrPrt))
+
+		If Alltrim(cPassPrt) == AllTrim(AI3->AI3_PSW)
+			lRet := .T.
+		EndIf
+		
+	EndIf
+EndIf
+
+Return(lRet)
+
+//-------------------------------------------------------------------
 /*/{Protheus.doc} PrtCodVen
 Codigo de vendedor do usuário logado
 
@@ -20,78 +77,58 @@ Codigo de vendedor do usuário logado
 @type Function
 /*/
 //-------------------------------------------------------------------
-User Function PrtCodVen()
+User Function PrtCodVen(cUsrPrt)
 Local cRet       := "" 
 
 // verifica se o usuário esta cadastrado como representante
-SA3->(DbSetOrder(7)) // A3_FILIAL+A3_CODUSR
-If SA3->(MsSeek(xFilial('SA3')+RetCodUsr()))
-	cRet := SA3->A3_COD
+AI3->(DbSetOrder(1)) // AI3_FILIAL+AI3_CODUSU
+If AI3->(MsSeek(xFilial('AI3')+cUsrPrt))
+	cRet := AI3->AI3_ZCODVE
 EndIf
 
 Return(cRet)
 //-------------------------------------------------------------------
-/*/{Protheus.doc} PrtDtUAc
-Data do último acesso do usuário
+/*/{Protheus.doc} PrtLogAc
+Grava log ultimo acesso do usuário
 
 @author Felipe Toledo
 @since 07/07/17
 @type Function
 /*/
 //-------------------------------------------------------------------
-User Function PrtDtUAc()
-Local dRet       := CtoD('  /  /  ')
-Local cAliasQry  := GetNextAlias()
+User Function PrtLogAc(cUsrPrt)
 
-BeginSql Alias cAliasQry
-	COLUMN CV8_DATA AS DATE
-	
-	SELECT MAX(CV8_DATA) CV8_DATA
-	  FROM %Table:CV8% CV8
-	 WHERE CV8.CV8_FILIAL = %xFilial:CV8%
-	   AND CV8.CV8_PROC   = 'PRTLOGIN'
-	   AND CV8.CV8_USER   = %Exp:cUserName%
-	   AND CV8.%notDel%
-EndSql
-
-If (cAliasQry)->(! Eof())
-	dRet := (cAliasQry)->CV8_DATA
+// verifica se o usuário esta cadastrado como representante
+AI3->(DbSetOrder(2)) // AI3_FILIAL+AI3_LOGIN
+If AI3->(MsSeek(xFilial('AI3')+cUsrPrt))
+	AI3->(RecLock('AI3',.F.))
+	AI3->AI3_ZDTULT := Date()
+	AI3->AI3_ZHRULT := Time()
+	AI3->(MsUnLock())
 EndIf
 
-(cAliasQry)->(DbCloseArea())
+Return Nil
 
-Return(dRet)
 //-------------------------------------------------------------------
-/*/{Protheus.doc} PrtDtUAc
-Hora do último acesso do usuário
+/*/{Protheus.doc} PrtAltPas
+Altera a senha do usuário
 
 @author Felipe Toledo
 @since 07/07/17
 @type Function
 /*/
 //-------------------------------------------------------------------
-User Function PrtHrAc(dDtAcesso)
-Local cRet       := ''
-Local cAliasQry  := GetNextAlias()
+User Function PrtAltPas(cUsrPrt, cNewPas)
 
-BeginSql Alias cAliasQry
-	SELECT MAX(CV8_HORA) CV8_HORA
-	  FROM %Table:CV8% CV8
-	 WHERE CV8.CV8_FILIAL = %xFilial:CV8%
-	   AND CV8.CV8_PROC   = 'PRTLOGIN'
-	   AND CV8.CV8_USER   = %Exp:cUserName%
-	   AND CV8.CV8_DATA   = %Exp:DtoS(dDtAcesso)%
-	   AND CV8.%notDel%
-EndSql
-
-If (cAliasQry)->(! Eof())
-	cRet := (cAliasQry)->CV8_HORA
+// verifica se o usuário esta cadastrado como representante
+AI3->(DbSetOrder(2)) // AI3_FILIAL+AI3_LOGIN
+If AI3->(MsSeek(xFilial('AI3')+cUsrPrt))
+	AI3->(RecLock('AI3',.F.))
+	AI3->AI3_PSW   := cNewPas
+	AI3->(MsUnLock())
 EndIf
 
-(cAliasQry)->(DbCloseArea())
-
-
-Return(cRet)
+Return Nil
 
 //-------------------------------------------------------------------
 /*/{Protheus.doc} PrtImpos
@@ -270,7 +307,7 @@ Envia Orçamento de Venda por E-mail
 @type Function
 /*/
 //-------------------------------------------------------------------
-User Function PrtEnvOrc(cEmp, cFil, cNumOrc, cEmail)
+User Function PrtEnvOrc(cEmp, cFil, cNumOrc, cEmail, cUsrPrt)
 Local cDirPDF       := ''
 Local cFilePrint    := ''
 Local cFileAttac    := ''
@@ -286,7 +323,7 @@ cDirPDF   := SuperGetMV('ES_DIRBPDF',.F.,'\PDF\')
 cUrlLogo  := SuperGetMV('ES_URLLOGO',.F.,'http://www.condutti.com.br/img/logo_condutti.png')
 
 // Gera PDF do Orçamento de venda
-cFilePrint := U_CDT020JOB(cNumOrc)
+cFilePrint := U_CDT020JOB(cNumOrc, cUsrPrt)
 
 cFileAttac := cDirPDF+cFilePrint+'.pdf'
 
@@ -319,3 +356,43 @@ User Function PrtTstEnv()
 StartJob('U_PrtEnvOrc','VBIEED',.F.,'02','0201','000496', 'felipenunestoledo@gmail.com')
 Return
 */
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtEnvOrc
+Envia Orçamento de Venda por E-mail
+
+@author Felipe Toledo
+@since 23/07/17
+@type Function
+/*/
+//-------------------------------------------------------------------
+User Function PrtEnvPas(cEmp, cFil, cEmail, cNomeUsr, cNewPass)
+Local cDirPDF       := ''
+Local cFilePrint    := ''
+Local cFileAttac    := ''
+Local oProcWF       := Nil
+Local cUrlLogo      := ''
+Local lRet          := .T.
+
+// Setar ambiente para não consumir licença.
+RpcSetType(3)
+RpcSetEnv(cEmp,cFil,,,'FAT')
+
+cUrlLogo  := SuperGetMV('ES_URLLOGO',.F.,'http://www.condutti.com.br/img/logo_condutti.png')
+
+oProcWF := TWFProcess():New("ORCVENDA","RECUPERACAO SE SENHA")
+oProcWF:NewTask("ORCVENDA","\workflow\recpass.html")
+oProcWF:cSubject := '[ONLINE] - Recupeção de senha '
+oProcWF:cTo      := cEmail // 'felipenunestoledo@gmail.com'
+
+oProcWF:oHTML:ValByName("cUrlLogo",AllTrim(cUrlLogo))
+oProcWF:oHTML:ValByName("cNomeUsr",AllTrim(cNomeUsr))
+oProcWF:oHTML:ValByName("cNewPass",AllTrim(cNewPass))
+oProcWF:oHTML:ValByName("cEmpresa",AllTrim(FWFilRazSocial()))
+
+oProcWF:Start()
+WFSendMail()
+oProcWF:Finish()
+oProcWF := FreeObj(oProcWF)
+
+Return(lRet)

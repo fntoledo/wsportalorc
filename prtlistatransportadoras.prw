@@ -42,7 +42,8 @@ Local nPage      := Self:NPAGE
 Local nRegPag    := Self:NLIMPAG // Registros por pagina
 Local cPagDe     := ''
 Local cPagAte    := ''
-Local nTotReg    := 0
+Local nTotReg    := 0 // Total de Registros na consulta
+Local nTotPag    := 0 // Total de Registros na Pagina
 Local lRet       := .T.
 
 // Converte string base64 para formato original
@@ -97,9 +98,13 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotPag++,;
 	oObjResp:Add( PrtItListaTransportadoras():New( A4_COD, A4_NOME, A4_CGC ) );
 	}))
 EndIf
+
+// Total de registros da pagina
+oObjResp:SetRegPag(nTotPag)
 
 (cAliasQry)->(DbCloseArea())
 

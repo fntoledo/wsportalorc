@@ -65,10 +65,12 @@ Class PrtListaProdutos
 	
 	Data Produtos
 	Data nTotalRegistros   As Integer
+	Data nRegistrosPag     As Integer
 	
 	Method New() Constructor
 	Method Add() 
 	Method SetTotReg() 
+	Method SetRegPag() 
 	
 EndClass
 
@@ -91,6 +93,13 @@ Return
 //
 Method SetTotReg(nTotReg) Class PrtListaProdutos
 	::nTotalRegistros  := nTotReg
+Return
+
+//
+// Informa quantidade de Registros na Pagina
+//
+Method SetRegPag(nRegPag) Class PrtListaProdutos
+	::nRegistrosPag  := nRegPag
 Return
 
 //-------------------------------------------------------------------
@@ -133,10 +142,12 @@ Class PrtListaClientes
 	
 	Data Clientes
 	Data nTotalRegistros   As Integer
+	Data nRegistrosPag     As Integer
 	
 	Method New() Constructor
 	Method Add() 
 	Method SetTotReg() 
+	Method SetRegPag() 
 	
 EndClass
 
@@ -159,6 +170,13 @@ Return
 //
 Method SetTotReg(nTotReg) Class PrtListaClientes
 	::nTotalRegistros  := nTotReg
+Return
+
+//
+// Informa quantidade de Registros na Pagina
+//
+Method SetRegPag(nRegPag) Class PrtListaClientes
+	::nRegistrosPag  := nRegPag
 Return
 
 //-------------------------------------------------------------------
@@ -272,10 +290,12 @@ Class PrtListaOrcamentos
 	
 	Data Orcamentos
 	Data nTotalRegistros   As Integer
+	Data nRegistrosPag     As Integer
 	
 	Method New() Constructor
 	Method Add() 
 	Method SetTotReg() 
+	Method SetRegPag() 
 	
 EndClass
 
@@ -298,6 +318,13 @@ Return
 //
 Method SetTotReg(nTotReg) Class PrtListaOrcamentos
 	::nTotalRegistros  := nTotReg
+Return
+
+//
+// Informa quantidade de Registros na Pagina
+//
+Method SetRegPag(nRegPag) Class PrtListaOrcamentos
+	::nRegistrosPag  := nRegPag
 Return
 
 //-------------------------------------------------------------------
@@ -353,10 +380,12 @@ Class PrtListaVendedores
 	
 	Data Vendedores
 	Data nTotalRegistros   As Integer
+	Data nRegistrosPag     As Integer
 	
 	Method New() Constructor
 	Method Add() 
-	Method SetTotReg() 
+	Method SetTotReg()
+	Method SetRegPag()
 	
 EndClass
 
@@ -379,6 +408,13 @@ Return
 //
 Method SetTotReg(nTotReg) Class PrtListaVendedores
 	::nTotalRegistros  := nTotReg
+Return
+
+//
+// Informa quantidade de Registros na Pagina
+//
+Method SetRegPag(nRegPag) Class PrtListaVendedores
+	::nRegistrosPag  := nRegPag
 Return
 
 //-------------------------------------------------------------------
@@ -737,10 +773,12 @@ Class PrtListaTransportadoras
 	
 	Data Transportadoras
 	Data nTotalRegistros   As Integer
+	Data nRegistrosPag     As Integer
 	
 	Method New() Constructor
 	Method Add() 
-	Method SetTotReg() 
+	Method SetTotReg()
+	Method SetRegPag()
 	
 EndClass
 
@@ -763,6 +801,13 @@ Return
 //
 Method SetTotReg(nTotReg) Class PrtListaTransportadoras
 	::nTotalRegistros  := nTotReg
+Return
+
+//
+// Informa quantidade de Registros na Pagina
+//
+Method SetRegPag(nRegPag) Class PrtListaTransportadoras
+	::nRegistrosPag  := nRegPag
 Return
 
 //-------------------------------------------------------------------
@@ -864,6 +909,7 @@ do objeto
 Class PrtTabelaPreco
 	
 	Data cTabelaPrc     As String
+	Data cNomeTabela    As String
 	
 	Method New() Constructor 
 EndClass
@@ -872,8 +918,9 @@ EndClass
 // Metodo Contrutor
 //
 
-Method New(cCodTab) Class PrtTabelaPreco
+Method New(cCodTab,cNomeTab) Class PrtTabelaPreco
 	::cTabelaPrc          := cCodTab
+	::cNomeTabela         := cNomeTab
 Return(Self)
 
 //-------------------------------------------------------------------
@@ -919,12 +966,16 @@ Class PrtCliente
 	
 	Data cCodigo            As String
 	Data cLoja              As String
+	Data cNome              As String
 	Data cCNPJ              As String
+	Data cVendedor          As String
 	Data cEndereco          As String
 	Data cBairro            As String
 	Data cMunicipio         As String
 	Data cUF                As String
 	Data cCEP               As String
+	Data cTelefone          As String
+	Data cContato           As String
 	Data nLimiteCredito     As Float
 	Data dPrimeiraCompra    As Date
 	Data nSaldoHistorico    As Float
@@ -944,15 +995,19 @@ EndClass
 // Metodo Contrutor
 //
 
-Method New(cCodCli, cLojCli, cCGC, cEnd, cBairro, cMun, cUF, cCEP, nLimCred, dDtPriCom, nSldHist, dDtUltCom, nLimSec, nMaiorAtr, nSldSec, nMediaAtr, nMaiorCom, cRisco, nMaiorSld ) Class PrtCliente
+Method New(cCodCli, cLojCli, cNomCli, cCGC, cVend, cEnd, cBairro, cMun, cUF, cCEP, cTel, cContato, nLimCred, dDtPriCom, nSldHist, dDtUltCom, nLimSec, nMaiorAtr, nSldSec, nMediaAtr, nMaiorCom, cRisco, nMaiorSld ) Class PrtCliente
 	::cCodigo               := AllTrim(cCodCli)
 	::cLoja                 := AllTrim(cLojCli)
+	::cNome                 := EncodeUtf8(AllTrim(cNomCli))
 	::cCNPJ                 := AllTrim(cCGC)
+	::cVendedor             := AllTrim(cVend)
 	::cEndereco             := EncodeUtf8(AllTrim(cEnd))
 	::cBairro               := EncodeUtf8(AllTrim(cBairro))
 	::cMunicipio            := EncodeUtf8(AllTrim(cMun))
 	::cUF                   := AllTrim(cUF)
 	::cCEP                  := AllTrim(cCEP)
+	::cTelefone             := AllTrim(cTel)
+	::cContato              := AllTrim(cContato)
 	::nLimiteCredito        := nLimCred
 	::dPrimeiraCompra       := DtoC(dDtPriCom)
 	::nSaldoHistorico       := nSldHist
@@ -967,7 +1022,7 @@ Method New(cCodCli, cLojCli, cCGC, cEnd, cBairro, cMun, cUF, cCEP, nLimCred, dDt
 Return(Self)
 
 //-------------------------------------------------------------------
-/*/{Protheus.doc} PrtPesquisa
+/*/{Protheus.doc} PrtPrtPesquisaPortal
 Classe de pesquisa para realizar a serialização do objeto
 
 @author Felipe Toledo

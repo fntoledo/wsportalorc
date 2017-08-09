@@ -12,7 +12,8 @@ Serviço REST de lista de clientes portal de vendas
 //-------------------------------------------------------------------
 WSRESTFUL PRTLISTACLIENTES DESCRIPTION "Serviço REST de clientes portal de vendas"
 
-WSDATA CFILTROSQL As String OPTIONAL // String com filtro SQL
+WSDATA CCODUSR    As String           // Usuário Portal
+WSDATA CFILTROSQL As String OPTIONAL  // String com filtro SQL
 WSDATA NPAGE      As Integer OPTIONAL // Numero da pagina
 WSDATA NLIMPAG    As Integer OPTIONAL // Numero Maximo de registros por pagina
 
@@ -28,13 +29,14 @@ Processa as informações e retorna o json
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD GET WSRECEIVE CFILTROSQL, NPAGE, NLIMPAG WSSERVICE PRTLISTACLIENTES
+WSMETHOD GET WSRECEIVE CCODUSR, CFILTROSQL, NPAGE, NLIMPAG WSSERVICE PRTLISTACLIENTES
+Local cUsrPrt    := Self:CCODUSR
 Local oObjResp   := Nil
 Local cJson      := ''
 Local cAliasQry  := GetNextAlias()
 Local cAliasTot  := ''
 Local oObjResp   := PrtListaClientes():New() // --> Objeto que será serializado
-Local cCodVen    := U_PrtCodVen() // Codigo do Vendedor
+Local cCodVen    := ''// Codigo do Vendedor
 Local cWhere     := ''
 Local cWhere2    := ''
 Local cFiltroSql := Self:CFILTROSQL
@@ -42,8 +44,19 @@ Local nPage      := Self:NPAGE
 Local nRegPag    := Self:NLIMPAG // Registros por pagina
 Local cPagDe     := ''
 Local cPagAte    := ''
-Local nTotReg    := 0 // Total de Registros
+Local nTotReg    := 0 // Total de Registros na consulta
+Local nTotPag    := 0 // Total de Registros na Pagina
 Local lRet       := .T.
+
+// Valida CODIGO usuario portal
+lRet := U_PrtVldUsr(cUsrPrt)
+If !lRet
+	SetRestFault(400, "Codigo usuario invalido")
+	lRet := .F.
+	Return(lRet)
+EndIf
+
+cCodVen := U_PrtCodVen(cUsrPrt) // Codigo do Vendedor
 
 // Converte string base64 para formato original
 If !Empty(cFiltroSql)
@@ -97,9 +110,13 @@ EndSql
 If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
+	nTotPag++,;
 	oObjResp:Add( PrtItListaClientes():New( A1_COD, A1_LOJA, A1_NOME, A1_CGC, A1_VEND ) );
 	}))
 EndIf
+
+// Total de registros da pagina
+oObjResp:SetRegPag(nTotPag)
 
 (cAliasQry)->(DbCloseArea())
 

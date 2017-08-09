@@ -12,6 +12,7 @@ Serviço REST de lista de vendedores portal de vendas
 //-------------------------------------------------------------------
 WSRESTFUL PRTLISTAVENDEDORES DESCRIPTION "Serviço REST de lista de vendedores disponíveis para o portal de vendas"
 
+WSDATA CCODUSR    As String // Usuário Portal
 WSDATA CFILTROSQL As String OPTIONAL //String com filtro SQL
 
 WSMETHOD GET DESCRIPTION "Retorna todos os vendedores disponiveis para o portal de vendas" WSSYNTAX "/PRTLISTAVENDEDORES "
@@ -26,23 +27,34 @@ Processa as informações e retorna o json
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD GET WSRECEIVE CFILTROSQL WSSERVICE PRTLISTAVENDEDORES
+WSMETHOD GET WSRECEIVE CCODUSR, CFILTROSQL WSSERVICE PRTLISTAVENDEDORES
+Local cUsrPrt    := Self:CCODUSR
 Local oObjResp   := Nil
 Local cJson      := ''
 Local cAliasQry  := GetNextAlias()
 Local oObjResp   := PrtListaVendedores():New() // --> Objeto que será serializado
-Local cCodVen    := U_PrtCodVen() // Codigo do Vendedor
+Local cCodVen    := '' // Codigo do Vendedor
 Local cWhere     := ''
 Local cFiltroSql := Self:CFILTROSQL
 Local aBoxTipo   := RetSx3Box( Posicione('SX3', 2, 'A3_TIPO', 'X3CBox()' ),,, Len(SA3->A3_TIPO) )
 Local cTipo      := ''
-Local nTotReg    := 0 // Total de Registros
+Local nTotReg    := 0 // Total de Registros na consulta
 Local lRet       := .T.
+
+// Valida CODIGO usuario portal
+lRet := U_PrtVldUsr(cUsrPrt)
+If !lRet
+	SetRestFault(400, "Codigo usuario invalido")
+	lRet := .F.
+	Return(lRet)
+EndIf
 
 // Converte string base64 para formato original
 If !Empty(cFiltroSql)
 	cFiltroSql := Decode64(cFiltroSql)
 EndIf
+
+cCodVen := U_PrtCodVen(cUsrPrt) // Codigo do Vendedor
 
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
