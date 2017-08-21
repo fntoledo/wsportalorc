@@ -191,6 +191,8 @@ Impressao do Cabeçalho do Orçamento de Venda
 Static Function sfPrtCab(cNameUsr)
 // Imagem Logo
 Local cLogo         := FisxLogo("1")
+Local cHomepage     := SuperGetMV('ES_HOMEPAG',.F.,'www.homepage.com.br')
+Local cMailSAC      := SuperGetMV('ES_MAILSAC',.F.,'sac@dominio.com.br')
 
 // Inicia Pagina
 oPrinter:StartPage()
@@ -201,8 +203,8 @@ oPrinter:SayBitmap(010,005,cLogo,080,080)
 oPrinter:Say( 015, 110, FWFilRazSocial(), oFont12N)
 oPrinter:Say( 030, 110, AllTrim(SM0->M0_ENDCOB) + " - " + AllTrim(SM0->M0_BAIRCOB) + " - " + AllTrim(SM0->M0_CIDCOB)+ " - " + AllTrim(SM0->M0_ESTCOB), oFont12)
 oPrinter:Say( 045, 110, "CNPJ: " + Transform(SM0->M0_CGC,PesqPict("SA1","A1_CGC"))+ " - CEP: " + Transform(AllTrim(SM0->M0_CEPCOB),PesqPict("SA1","A1_CEP")), oFont12)
-oPrinter:Say( 060, 110, "www.conducopper.com", oFont12)
-oPrinter:Say( 075, 110, "sac@conducopper.com", oFont12)
+oPrinter:Say( 060, 110, cHomepage, oFont12)
+oPrinter:Say( 075, 110, cMailSAC, oFont12)
 oPrinter:Say( 090, 110, 'Fone: '+SM0->M0_TEL, oFont12)
 
 // Numero Orçamento
@@ -239,7 +241,7 @@ oPrinter:Say( nLin, 005, 'It'                 , oFont10N)
 oPrinter:Say( nLin, 020, 'Codigo'             , oFont10N)
 oPrinter:Say( nLin, 090, 'Descrição Material' , oFont10N)
 oPrinter:Say( nLin, 285, 'UM'                 , oFont10N)
-oPrinter:Say( nLin, 340, 'Quant'              , oFont10N)
+oPrinter:Say( nLin, 350, 'Quant'              , oFont10N)
 oPrinter:Say( nLin, 398, 'Vl.Unit'            , oFont10N)
 oPrinter:Say( nLin, 439, 'IPI'                , oFont10N)
 oPrinter:Say( nLin, 460, 'ICMS'               , oFont10N)
@@ -414,7 +416,7 @@ For nCntFor1 := 1 To Len(aItens)
 	oPrinter:Say( nLin, 020, AllTrim(aItens[nCntFor1][2])                                             , oFont10)
 	
 	oPrinter:Say( nLin, 285, aItens[nCntFor1][3]                                                      , oFont10)
-	oPrinter:SayAlign( nLin-8, 305, Transform(aItens[nCntFor1][4],PesqPictQt("CK_QTDVEN"))            , oFont10,60,10,,1) // Alinha a direita
+	oPrinter:SayAlign( nLin-8, 305, Transform(aItens[nCntFor1][4],PesqPictQt("CK_QTDVEN"))            , oFont10,70,10,,1) // Alinha a direita
 	oPrinter:SayAlign( nLin-8, 375, Transform(aItens[nCntFor1][5],PesqPict("SCK","CK_PRCVEN"))        , oFont10,50,10,,1) // Alinha a direita
 	oPrinter:SayAlign( nLin-8, 430, Transform(MaFisRet(nCntFor1,"IT_ALIQIPI"),"@E 99.99")             , oFont10,20,10,,1) // Alinha a direita
 	oPrinter:SayAlign( nLin-8, 460, Transform(MaFisRet(nItem,"IT_ALIQICM"),"@E 99.99")                , oFont10,20,10,,1) // Alinha a direita
@@ -444,7 +446,7 @@ nLin += 10
 oPrinter:Box( nLin, 000, nLin+15, 603)
 nLin += 10
 oPrinter:Say( nLin, 005, 'TOTAIS'                                             , oFont10N)
-oPrinter:SayAlign( nLin-8, 305, Transform(nTotQtd,PesqPictQt("CK_QTDVEN"))    , oFont10N,60,10,,1) // Alinha a direita
+oPrinter:SayAlign( nLin-8, 305, Transform(nTotQtd,PesqPictQt("CK_QTDVEN"))    , oFont10N,70,10,,1) // Alinha a direita
 oPrinter:SayAlign( nLin-8, 490, Transform(nTotVal,PesqPict("SCK","CK_VALOR")) , oFont10N,60,10,,1) // Alinha a direita
 
 nLin += 5

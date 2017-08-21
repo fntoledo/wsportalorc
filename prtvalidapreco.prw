@@ -41,12 +41,32 @@ Local nPrcVen    := If(Empty(Self:NPRCVEN),0,Self:NPRCVEN)
 Local nQtde      := If(Empty(Self:NQUANT) ,0,Self:NQUANT)
 Local nValorTot  := 0
 Local lRet       := .T.
+Local nQtde2UM   := 0
 
 // Valida produto
 SB1->(DbSetOrder(1)) //B1_FILIAL+B1_COD
 If Empty(cCodPro) .Or. !SB1->(MsSeek(xFilial('SB1')+cCodPro))
 	SetRestFault(400, "produto invalido")
 	lRet := .F.
+EndIf
+
+If lRet
+	// Quantidade minima para venda
+	If nQtde < SB1->B1_LOTVEN
+		SetRestFault(400, "quantidade inferior ao lote minima de venda: Lote Minimo: " + Alltrim(STR(SB1->B1_LOTVEN,20,6)))
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	// Converte para a segunda unidade de medida
+	nQtde2UM := ConvUm( cCodPro, nQtde, 0, 2 )
+
+	If nQtde2UM > Int(nQtde2UM)
+		SetRestFault(400, "quantidade nao e multipla na 2a.UN do produto: " + Alltrim(STR(nQtde2UM,20,6)))
+		lRet := .F.
+	EndIf
+
 EndIf
 
 // Valida tabela de preco
@@ -70,7 +90,7 @@ If lRet
 	// Retorna o valor total
 	nValorTot:= A410Arred(nQtde * nPrcVen,"CK_VALOR")
 	// Objeto que será serializado
-	oObjResp := PrtValidaPreco():New(nValorTot)
+	oObjResp := PrtValidaPreco():New(nValorTot, nQtde2UM, SB1->B1_SEGUM)
 EndIf
 
 // --> Transforma o objeto de produtos em uma string json

@@ -116,6 +116,8 @@ Class PrtItListaProdutos
 	
 	Data cCodigo            As String
 	Data cDescricao         As String
+	Data nSldDisp           As Float
+	Data nQtdPrevEntrada    As Float
 
 	Method New() Constructor 
 EndClass
@@ -123,9 +125,11 @@ EndClass
 //
 // Metodo Contrutor
 //
-Method New(cCodProd, cDesProd) Class PrtItListaProdutos
+Method New(cCodProd, cDesProd, nSldDisp, nQtPrvEnt) Class PrtItListaProdutos
 	::cCodigo                := AllTrim(cCodProd)
 	::cDescricao             := EncodeUtf8(AllTrim(cDesProd))
+	::nSldDisp               := nSldDisp
+	::nQtdPrevEntrada        := nQtPrvEnt
 Return(Self)
 
 //-------------------------------------------------------------------
@@ -882,6 +886,8 @@ para realizar a serialização do objeto
 Class PrtValidaPreco
 	
 	Data nValorTot          As Float
+	Data nQuant_2UM         As Float
+	Data cSegUM             As String
 	
 	Method New() Constructor 
 EndClass
@@ -890,8 +896,10 @@ EndClass
 // Metodo Contrutor
 //
 
-Method New(nValorTot) Class PrtValidaPreco
+Method New(nValorTot, nQtde2UM, cSegUM) Class PrtValidaPreco
 	::nValorTot            := nValorTot
+	::nQuant_2UM           := nQtde2UM
+	::cSegUM               := cSegUM
 Return(Self)
 
 //-------------------------------------------------------------------
@@ -968,6 +976,7 @@ Class PrtCliente
 	Data cLoja              As String
 	Data cNome              As String
 	Data cCNPJ              As String
+	Data cInscEstadual      As String
 	Data cVendedor          As String
 	Data cEndereco          As String
 	Data cBairro            As String
@@ -995,11 +1004,12 @@ EndClass
 // Metodo Contrutor
 //
 
-Method New(cCodCli, cLojCli, cNomCli, cCGC, cVend, cEnd, cBairro, cMun, cUF, cCEP, cTel, cContato, nLimCred, dDtPriCom, nSldHist, dDtUltCom, nLimSec, nMaiorAtr, nSldSec, nMediaAtr, nMaiorCom, cRisco, nMaiorSld ) Class PrtCliente
+Method New(cCodCli, cLojCli, cNomCli, cCGC, cInscr, cVend, cEnd, cBairro, cMun, cUF, cCEP, cTel, cContato, nLimCred, dDtPriCom, nSldHist, dDtUltCom, nLimSec, nMaiorAtr, nSldSec, nMediaAtr, nMaiorCom, cRisco, nMaiorSld ) Class PrtCliente
 	::cCodigo               := AllTrim(cCodCli)
 	::cLoja                 := AllTrim(cLojCli)
 	::cNome                 := EncodeUtf8(AllTrim(cNomCli))
 	::cCNPJ                 := AllTrim(cCGC)
+	::cInscEstadual         := AllTrim(cInscr)
 	::cVendedor             := AllTrim(cVend)
 	::cEndereco             := EncodeUtf8(AllTrim(cEnd))
 	::cBairro               := EncodeUtf8(AllTrim(cBairro))

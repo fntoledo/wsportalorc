@@ -50,6 +50,7 @@ If lRet
 		                             SA1->A1_LOJA,;
 		                             SA1->A1_NOME,;
 		                             SA1->A1_CGC,;
+		                             SA1->A1_INSCR,;
 		                             SA1->A1_VEND,;
 		                             SA1->A1_END,;
 		                             SA1->A1_BAIRRO,;

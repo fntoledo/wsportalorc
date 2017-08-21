@@ -35,6 +35,7 @@ Local cJson      := ''
 Local cAliasQry  := GetNextAlias()
 Local cAliasTot  := ''
 Local oObjResp   := PrtListaProdutos():New() // --> Objeto que será serializado
+Local cCodPro    := '' // Codigo do Produto
 Local cFiltroSql := Self:CFILTROSQL
 Local nPage      := Self:NPAGE
 Local nRegPag    := Self:NLIMPAG // Registros por pagina
@@ -54,7 +55,16 @@ EndIf
 //-------------------------------------------------------------
 // Filtro na seleção dos registros
 //-------------------------------------------------------------
+If Len(::aUrlParms) > 0
+	cCodPro := ::aUrlParms[1] // Recebe o codigo do produto
+EndIf
+
 cWhere :="%"
+If ! Empty(cCodPro)
+	// Filtra transportadora
+	cWhere += " AND SB1.B1_COD   = '" + cCodPro + "' "
+EndIf
+
 If ! Empty(cFiltroSql)
 	// Filtro SQL 
 	cWhere += " AND " + cFiltroSql
@@ -73,10 +83,18 @@ cWhere2 += "%"
 
 // Query para listar os produtos disponiveis para orçamento
 BeginSql Alias cAliasQry
-    SELECT B1_COD, B1_DESC
+    SELECT B1_COD, B1_DESC, 
+           B2_COD, B2_LOCAL, B2_STATUS, B2_QATU, B2_SALPEDI, B2_QEMP, B2_RESERVA, B2_QEMPPRJ, B2_QACLASS, B2_QEMPSA, B2_QTNP, B2_QEMPN, B2_QNPT
       FROM (
-	SELECT ROW_NUMBER() OVER (ORDER BY B1_COD) AS LINHA, B1_COD, B1_DESC
+	SELECT ROW_NUMBER() OVER (ORDER BY B1_COD) AS LINHA, B1_COD, B1_DESC,
+	       B2_COD, B2_LOCAL, B2_STATUS, B2_QATU, B2_SALPEDI, B2_QEMP, B2_RESERVA, B2_QEMPPRJ, B2_QACLASS, B2_QEMPSA, B2_QTNP, B2_QEMPN, B2_QNPT
 	  FROM %Table:SB1% SB1
+	  LEFT
+	  JOIN %Table:SB2% SB2
+	    ON SB2.B2_FILIAL = %xFilial:SB2%
+	   AND SB2.B2_COD    = SB1.B1_COD
+	   AND SB2.B2_LOCAL  = '01'
+	   AND SB2.%notDel%
 	 WHERE SB1.B1_FILIAL = %xFilial:SB1%
 	   %Exp:cWhere%
 	   AND SB1.B1_TIPO   = 'PA'
@@ -91,7 +109,7 @@ If (cAliasQry)->( ! Eof() )
 	//Cria um objeto da classe produtos para fazer a serialização na função FWJSONSerialize
 	(cAliasQry)->(DbEval({||;
 	nTotPag++,;
-	oObjResp:Add( PrtItListaProdutos():New( B1_COD, B1_DESC ) );
+	oObjResp:Add( PrtItListaProdutos():New( B1_COD, B1_DESC, If(Empty(B2_COD),0,SaldoSB2(,,,,,cAliasQry)), If(Empty(B2_COD),0,B2_SALPEDI) ) );
 	}))
 EndIf
 
