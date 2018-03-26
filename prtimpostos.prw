@@ -18,19 +18,19 @@ WSDATA CCODCLI  As String // Codigo do cliente
 WSDATA CLOJCLI  As String // Loja do cliente
 WSDATA CCONDPAG As String // Condição de Pagamento
 
-WSMETHOD POST DESCRIPTION "Calcula os impostos previstos no orçamento de venda para o portal de vendas" WSSYNTAX "/PRTIMPOSTOS "
+WSMETHOD PUT DESCRIPTION "Calcula os impostos previstos no orçamento de venda para o portal de vendas" WSSYNTAX "/PRTIMPOSTOS "
  
 END WSRESTFUL
 
 //-------------------------------------------------------------------
-/*/{Protheus.doc} POST
+/*/{Protheus.doc} PUT
 Processa as informações e retorna o json
 @author Felipe Toledo
 @since 10/07/17
 @type Method
 /*/
 //-------------------------------------------------------------------
-WSMETHOD POST WSSERVICE PRTIMPOSTOS
+WSMETHOD PUT WSSERVICE PRTIMPOSTOS
 Local oObjResp   := PrtImpostos():New() // --> Objeto que será serializado
 Local cJson      := ''
 Local cJSonReq 	 := Self:GetContent() // Pega a string do JSON de requisicao

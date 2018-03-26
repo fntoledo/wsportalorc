@@ -54,7 +54,7 @@ Local lRet      := .T.
 
 // Valida usuário
 If lRet .And. !U_PrtAuth(cUsrPrt, cPassPrt)
-	SetRestFault(400, "Usuario nao autorizado")
+	SetRestFault(401, "Usuario nao autorizado")
 	lRet := .F.
 EndIf
 
@@ -138,7 +138,7 @@ EndIf
 ::SetContentType("application/json")
 
 // --> Envia o JSON Gerado para a aplicação Client
-::SetResponse("{ENVIO: 'OK'}")
+::SetResponse('{"ENVIO": "OK"}')
 
 Return(lRet)
 
@@ -193,6 +193,6 @@ EndIf
 ::SetContentType("application/json")
 
 // --> Envia o JSON Gerado para a aplicação Client
-::SetResponse("{STATUS: 'OK'}")
+::SetResponse('{"STATUS": "OK"}')
 
 Return(lRet)
