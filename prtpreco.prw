@@ -46,6 +46,7 @@ Local dDtEmis    := Date()
 Local nPrcVen    := 0
 Local nPrcMin    := 0
 Local lRet       := .T.
+Local aPreco     := {}
 
 // Valida tabela de preco
 DA0->(DbSetOrder(1)) //DA0_FILIAL+DA0_CODTAB
@@ -74,10 +75,14 @@ EndIf
 
 If lRet
 	// Retorna o Preco de Venda
-	nPrcVen := MaTabPrVen(cTabPrec,cCodPro,nQtde,cCliente,cLoja,nMoeda,dDtEmis)
+	//nPrcVen := MaTabPrVen(cTabPrec,cCodPro,nQtde,cCliente,cLoja,nMoeda,dDtEmis)
 	
 	// Retorna o Preço Minimo
-	nPrcMin	:= Posicione("DA1", 1, xFilial("DA1") + cTabPrec + cCodPro, 'DA1_PREMIN')
+	//nPrcMin	:= Posicione("DA1", 1, xFilial("DA1") + cTabPrec + cCodPro, 'DA1_PREMIN')
+	
+	aPreco  := sfPrcVen(cTabPrec,cCodPro,nQtde,dDtEmis)
+	nPrcVen := aPreco[1]
+	nPrcMin := aPreco[2]
 	
 	// Objeto que será serializado
 	oObjResp := PrtPreco():New(nPrcVen,nPrcMin)
@@ -93,3 +98,37 @@ cJson := FWJsonSerialize(oObjResp,.F.)
 ::SetResponse(cJson)
 
 Return(lRet)
+//-------------------------------------------------------------------
+/*/{Protheus.doc} sfPrcVen
+Retorna a o preco de venda e o preco minimo da tabela
+@author Felipe Toledo
+@since 26/01/18
+@type Method
+/*/
+//-------------------------------------------------------------------
+Static Function sfPrcVen(cTabPrec,cCodPro,nQtde,dDtEmis)
+Local aRet      := {0,0} //[1] DA1_PRCVEN, [2] DA1_PREMIN
+Local cAliasQry := GetNextAlias()
+
+BeginSql Alias cAliasQry
+	SELECT DA1_PRCVEN, DA1_PREMIN
+	  FROM %Table:DA1% DA1
+	 WHERE DA1.DA1_FILIAL  = %xFilial:DA1%
+	   AND DA1.DA1_CODTAB  = %Exp:cTabPrec%
+	   AND DA1.DA1_CODPRO  = %Exp:cCodPro%
+	   AND DA1.DA1_QTDLOT >= %Exp:Str(nQtde,18,8)%
+	   AND DA1.DA1_ATIVO   = '1'
+	   AND (DA1.DA1_DATVIG <= %Exp:DtoS(dDtEmis)% OR DA1.DA1_DATVIG = ' ' )
+	   AND DA1.%NotDel%
+	 ORDER
+	    BY DA1_QTDLOT
+EndSql
+
+If (cAliasQry)->(!Eof())
+	aRet[1] := (cAliasQry)->DA1_PRCVEN
+	aRet[2] := (cAliasQry)->DA1_PREMIN
+Endif
+
+(cAliasQry)->(DbCloseArea())
+
+Return(aRet)

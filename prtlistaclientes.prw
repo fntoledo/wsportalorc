@@ -78,7 +78,7 @@ EndIf
 
 If ! Empty(cFiltroSql)
 	// Filtro SQL 
-	cWhere += " AND " + cFiltroSql
+	cWhere += " AND (" + cFiltroSql + ")"
 EndIf
 
 cWhere +="%"

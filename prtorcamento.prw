@@ -56,6 +56,9 @@ If lRet
 	If SCJ->(MsSeek(xFilial('SCJ')+cNumOrc))
 		SA1->(DbSetOrder(1)) // A1_FILIAL+A1_COD+A1_LOJA
 		SA1->(MsSeek(xFilial('SA1')+SCJ->(CJ_CLIENTE+CJ_LOJA)))
+		
+		SE4->(DbSetOrder(1)) //E4_FILIAL+E4_CODIGO
+		SE4->(MsSeek(xFilial('SE4')+SCJ->CJ_CONDPAG))
 	
 		cStatus  := SCJ->CJ_STATUS +"-"+AllTrim(  aBoxStat[ Ascan( aBoxStat,  { |x| x[ 2 ] == SCJ->CJ_STATUS}  ), 3 ])
 		cTpFrete := SCJ->CJ_TPFRETE+"-"+AllTrim( aBoxtTpFr[ Ascan( aBoxtTpFr, { |x| x[ 2 ] == SCJ->CJ_TPFRETE} ), 3 ])
@@ -69,10 +72,12 @@ If lRet
 		                             SA1->A1_CGC,;
 		                             cStatus,;
 		                             SCJ->CJ_CONDPAG,;
+		                             SE4->E4_DESCRI,;
 		                             SCJ->CJ_TABELA,;
 		                             SCJ->CJ_VEND1,;
 		                             cTpFrete,;
-		                             SCJ->CJ_TRANSP) )
+		                             SCJ->CJ_TRANSP,;
+		                             SA1->A1_EMAIL) )
 
 		// Seleciona Itens
 		BeginSql Alias cAliasQry
@@ -145,8 +150,9 @@ Serviço REST de Inclusão do Orçamento de Venda
 WSMETHOD POST WSRECEIVE CCODUSR WSSERVICE PRTORCAMENTO
 Local cUsrPrt    := Self:CCODUSR
 Local cJSonReq 	 := Self:GetContent() // Pega a string do JSON de requisicao
-Local oParseJSON := Nil 
 Local cJson      := ''
+Local oObjResp   := Nil
+Local oParseJSON := Nil 
 Local cNumOrc    := ''
 Local aCabec     := {}
 Local aLinha     := {}
@@ -195,11 +201,15 @@ For nCntFor := 1 To Len(oParseJSON:ITENS)
 	AAdd(aLinha ,{"CK_OPER"   ,'01'                                           ,Nil})
 	AAdd(aLinha ,{"CK_ENTPROG",oParseJSON:ITENS[nCntFor]:cEntregaProg         ,Nil})
 	AAdd(aLinha ,{"CK_ENTREG" ,CtoD(oParseJSON:ITENS[nCntFor]:dDtPrevEntrega) ,Nil})
-	AAdd(aLinha ,{"CK_OBS"    ,oParseJSON:ITENS[nCntFor]:cObservacao          ,Nil})
+	AAdd(aLinha ,{"CK_OBS"    ,U_PrtNoAce(oParseJSON:ITENS[nCntFor]:cObservacao),Nil})
 	AAdd(aLinha ,{"CK_PRCUNIT",oParseJSON:ITENS[nCntFor]:nPrcUnitario         ,Nil})
 	
 	Aadd(aItens, aLinha)
 Next nCntFor
+
+Conout('<<<<<INCLUSAO>>>>>')
+VarInfo("",aCabec)
+VarInfo("",aItens)
 
 SA3->(DbSetOrder(1)) // Set ordem para evitar erro na validação do campo CJ_VEND1
 
@@ -221,7 +231,11 @@ If lMsErroAuto
 Else
 	//ConfirmSX8()
 	// Retorno
-	cJson := "{ORCAMENTO: '"+cNumOrc+"'}"
+	// Objeto que será serializado
+	oObjResp := PrtNumOrcamento():New(cNumOrc)
+	
+	// --> Transforma o objeto de produtos em uma string json
+	cJson := FWJsonSerialize(oObjResp,.F.)
 EndIf
 
 // define o tipo de retorno do método
@@ -340,6 +354,10 @@ If lRet
 		(cAliasQry)->(DbSkip())
 	EndDo
 	
+	Conout('<<<<<ALTERACAO>>>>>')
+	VarInfo("",aCabec)
+	VarInfo("",aItens)
+	
 	(cAliasQry)->(DbCloseArea())
 	
 	SA3->(DbSetOrder(1)) // Set ordem para evitar erro na validação do campo CJ_VEND1
@@ -360,7 +378,7 @@ If lRet
 		lRet := .F.
 	Else
 		// Retorno
-		cJson := "{ORCAMENTO: '"+cNumOrc+"', ALTERACAO: 'OK'}"
+		cJson := '{"ORCAMENTO": "'+cNumOrc+'", "ALTERACAO": "OK"}'	
 	EndIf
 EndIf
 
@@ -434,7 +452,7 @@ If lRet
 				SetRestFault(400, cErro)
 				lRet := .F.
 			Else
-				cJson := "{ORCAMENTO: '"+cNumOrc+"', EXCLUSAO: 'OK'}"
+				cJson := '{"ORCAMENTO": "'+cNumOrc+'", "EXCLUSAO": "OK"}'
 			EndIf
 		EndIf
 	Else
@@ -468,6 +486,7 @@ Local aArea := GetArea()
 SCJ->( DbSetOrder(1) ) // CJ_FILIAL+CJ_NUM+CJ_CLIENTE+CJ_LOJA
 
 While SCJ->( DbSeek( xFilial("SCJ") + cCod ) )
+	SCJ->(ConfirmSX8())
 	cCod := GetSX8Num("SCJ", "CJ_NUM")
 EndDo
 

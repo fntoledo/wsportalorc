@@ -320,7 +320,7 @@ RpcSetType(3)
 RpcSetEnv(cEmp,cFil,,,'FAT')
 
 cDirPDF   := SuperGetMV('ES_DIRBPDF',.F.,'\PDF\')
-cUrlLogo  := SuperGetMV('ES_URLLOGO',.F.,'http://www.condutti.com.br/img/logo_condutti.png')
+cUrlLogo  := SuperGetMV('ES_URLLOGO',.F.,'http://conducopper.com/portal/img/logo.png')
 
 // Gera PDF do Orçamento de venda
 cFilePrint := U_CDT020JOB(cNumOrc, cUsrPrt)
@@ -396,3 +396,46 @@ oProcWF:Finish()
 oProcWF := FreeObj(oProcWF)
 
 Return(lRet)
+//-------------------------------------------------------------------
+/*/{Protheus.doc} PrtNoAce
+Retira caracteres especiais
+
+@author Felipe Toledo
+@since 06/12/17
+@type Function
+/*/
+//-------------------------------------------------------------------
+User Function PrtNoAce(_sOrig)
+   local _sRet := _sOrig
+   _sRet = StrTran (_sRet, "á", "a")
+   _sRet = StrTran (_sRet, "é", "e")
+   _sRet = StrTran (_sRet, "í", "i")
+   _sRet = StrTran (_sRet, "ó", "o")
+   _sRet = StrTran (_sRet, "ú", "u")
+   _sRet = StrTran (_sRet, "Á", "A")
+   _sRet = StrTran (_sRet, "É", "E")
+   _sRet = StrTran (_sRet, "Í", "I")
+   _sRet = StrTran (_sRet, "Ó", "O")
+   _sRet = StrTran (_sRet, "Ú", "U")
+   _sRet = StrTran (_sRet, "ã", "a")
+   _sRet = StrTran (_sRet, "õ", "o")
+   _sRet = StrTran (_sRet, "Ã", "A")
+   _sRet = StrTran (_sRet, "Õ", "O")
+   _sRet = StrTran (_sRet, "â", "a")
+   _sRet = StrTran (_sRet, "ê", "e")
+   _sRet = StrTran (_sRet, "î", "i")
+   _sRet = StrTran (_sRet, "ô", "o")
+   _sRet = StrTran (_sRet, "û", "u")
+   _sRet = StrTran (_sRet, "Â", "A")
+   _sRet = StrTran (_sRet, "Ê", "E")
+   _sRet = StrTran (_sRet, "Î", "I")
+   _sRet = StrTran (_sRet, "Ô", "O")
+   _sRet = StrTran (_sRet, "Û", "U")
+   _sRet = StrTran (_sRet, "ç", "c")
+   _sRet = StrTran (_sRet, "Ç", "C")
+   _sRet = StrTran (_sRet, "à", "a")
+   _sRet = StrTran (_sRet, "À", "A")
+   _sRet = StrTran (_sRet, "º", ".")
+   _sRet = StrTran (_sRet, "ª", ".")
+   _sRet = StrTran (_sRet, chr (9), " ") // TAB
+Return _sRet

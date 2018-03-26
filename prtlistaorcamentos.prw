@@ -76,7 +76,7 @@ If ! Empty(cCodVen)
 EndIf
 
 If ! Empty(cFiltroSql) 
-	cWhere += " AND " + cFiltroSql
+	cWhere += " AND (" + cFiltroSql + ")"
 EndIf
 cWhere +="%"
 
